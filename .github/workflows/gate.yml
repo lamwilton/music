@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Sentinel Gate
-        uses: synapse-sentinel/gate@master
+        uses: synapse-sentinel/gate@v1.4.1
         with:
           check: certify
           coverage-threshold: 80
