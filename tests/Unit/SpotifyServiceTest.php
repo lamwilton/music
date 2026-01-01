@@ -9,15 +9,12 @@ use Tests\TestCase;
 uses(TestCase::class);
 
 beforeEach(function () {
-    // Mock config values
     Config::set('spotify.client_id', 'test_client_id');
     Config::set('spotify.client_secret', 'test_client_secret');
 
-    // Create temp token file
     $this->tokenFile = sys_get_temp_dir().'/spotify_test_token.json';
     $this->service = new SpotifyService;
 
-    // Use reflection to set the token file path
     $reflection = new ReflectionClass($this->service);
     $property = $reflection->getProperty('tokenFile');
     $property->setAccessible(true);
@@ -25,7 +22,6 @@ beforeEach(function () {
 });
 
 afterEach(function () {
-    // Clean up temp file
     if (file_exists($this->tokenFile)) {
         unlink($this->tokenFile);
     }
@@ -35,30 +31,24 @@ describe('SpotifyService', function () {
 
     describe('Authentication', function () {
 
-        test('checks if configured correctly', function () {
-            // Clean up the token file first
+        it('checks if configured correctly', function () {
             if (file_exists($this->tokenFile)) {
                 unlink($this->tokenFile);
             }
 
-            // Create a new service
             $service = new SpotifyService;
             $reflection = new ReflectionClass($service);
 
-            // Set the token file path to our test path
             $property = $reflection->getProperty('tokenFile');
             $property->setAccessible(true);
             $property->setValue($service, $this->tokenFile);
 
-            // Clear any existing token data
             $tokenProp = $reflection->getProperty('accessToken');
             $tokenProp->setAccessible(true);
             $tokenProp->setValue($service, null);
 
-            // Now service should not be configured (no access token)
             expect($service->isConfigured())->toBeFalse();
 
-            // Add token
             file_put_contents($this->tokenFile, json_encode([
                 'access_token' => 'test_token',
                 'refresh_token' => 'refresh_token',
@@ -71,7 +61,6 @@ describe('SpotifyService', function () {
             $property->setAccessible(true);
             $property->setValue($service, $this->tokenFile);
 
-            // Force reload
             $method = $reflection->getMethod('loadTokenData');
             $method->setAccessible(true);
             $method->invoke($service);
@@ -79,15 +68,13 @@ describe('SpotifyService', function () {
             expect($service->isConfigured())->toBeTrue();
         });
 
-        test('refreshes expired token', function () {
-            // Set expired token
+        it('refreshes expired token', function () {
             file_put_contents($this->tokenFile, json_encode([
                 'access_token' => 'old_token',
                 'refresh_token' => 'refresh_token',
-                'expires_at' => time() - 100, // Expired
+                'expires_at' => time() - 100,
             ]));
 
-            // Mock refresh response
             Http::fake([
                 'accounts.spotify.com/api/token' => Http::response([
                     'access_token' => 'new_token',
@@ -109,7 +96,6 @@ describe('SpotifyService', function () {
             $method->setAccessible(true);
             $method->invoke($service);
 
-            // Check token was refreshed
             $tokenData = json_decode(file_get_contents($this->tokenFile), true);
             expect($tokenData['access_token'])->toBe('new_token');
         });
@@ -118,7 +104,6 @@ describe('SpotifyService', function () {
     describe('Playback Control', function () {
 
         beforeEach(function () {
-            // Set valid token
             file_put_contents($this->tokenFile, json_encode([
                 'access_token' => 'valid_token',
                 'refresh_token' => 'refresh_token',
@@ -136,7 +121,7 @@ describe('SpotifyService', function () {
             $method->invoke($this->service);
         });
 
-        test('searches for tracks', function () {
+        it('searches for tracks', function () {
             Http::fake([
                 'api.spotify.com/v1/search*' => Http::response([
                     'tracks' => [
@@ -157,7 +142,7 @@ describe('SpotifyService', function () {
             expect($result['artist'])->toBe('Test Artist');
         });
 
-        test('searches multiple tracks', function () {
+        it('searches multiple tracks', function () {
             Http::fake([
                 'api.spotify.com/v1/search*' => Http::response([
                     'tracks' => [
@@ -186,7 +171,7 @@ describe('SpotifyService', function () {
             expect($results[1]['name'])->toBe('Song 2');
         });
 
-        test('gets current playback state', function () {
+        it('gets current playback state', function () {
             Http::fake([
                 'api.spotify.com/v1/me/player' => Http::response([
                     'item' => [
@@ -212,7 +197,7 @@ describe('SpotifyService', function () {
             expect($current['device']['volume_percent'])->toBe(50);
         });
 
-        test('controls volume', function () {
+        it('controls volume', function () {
             Http::fake([
                 'api.spotify.com/v1/me/player/volume*' => Http::response([], 204),
             ]);
@@ -221,24 +206,21 @@ describe('SpotifyService', function () {
 
             expect($result)->toBeTrue();
 
-            // Verify the request was made with correct params
             Http::assertSent(function (Request $request) {
                 return str_contains($request->url(), 'volume_percent=42');
             });
         });
 
-        test('handles volume boundaries', function () {
+        it('handles volume boundaries', function () {
             Http::fake([
                 'api.spotify.com/v1/me/player/volume*' => Http::response([], 204),
             ]);
 
-            // Test upper boundary
             $this->service->setVolume(150);
             Http::assertSent(function (Request $request) {
                 return str_contains($request->url(), 'volume_percent=100');
             });
 
-            // Test lower boundary
             $this->service->setVolume(-10);
             Http::assertSent(function (Request $request) {
                 return str_contains($request->url(), 'volume_percent=0');
@@ -266,7 +248,7 @@ describe('SpotifyService', function () {
             $method->invoke($this->service);
         });
 
-        test('gets available devices', function () {
+        it('gets available devices', function () {
             Http::fake([
                 'api.spotify.com/v1/me/player/devices' => Http::response([
                     'devices' => [
@@ -295,7 +277,7 @@ describe('SpotifyService', function () {
             expect($devices[0]['is_active'])->toBeTrue();
         });
 
-        test('finds active device', function () {
+        it('finds active device', function () {
             Http::fake([
                 'api.spotify.com/v1/me/player/devices' => Http::response([
                     'devices' => [
@@ -339,7 +321,7 @@ describe('SpotifyService', function () {
             $method->invoke($this->service);
         });
 
-        test('gets queue', function () {
+        it('gets queue', function () {
             Http::fake([
                 'api.spotify.com/v1/me/player/queue' => Http::response([
                     'currently_playing' => [
@@ -359,7 +341,7 @@ describe('SpotifyService', function () {
             expect($queue['queue'][0]['name'])->toBe('Next Track');
         });
 
-        test('adds to queue', function () {
+        it('adds to queue', function () {
             Http::fake([
                 'api.spotify.com/v1/me/player/devices' => Http::response([
                     'devices' => [['id' => 'device1', 'is_active' => true]],
@@ -395,7 +377,7 @@ describe('SpotifyService', function () {
             $method->invoke($this->service);
         });
 
-        test('gets user playlists', function () {
+        it('gets user playlists', function () {
             Http::fake([
                 'api.spotify.com/v1/me/playlists*' => Http::response([
                     'items' => [
@@ -415,7 +397,7 @@ describe('SpotifyService', function () {
             expect($playlists[0]['name'])->toBe('My Playlist');
         });
 
-        test('plays playlist', function () {
+        it('plays playlist', function () {
             Http::fake([
                 'api.spotify.com/v1/me/player/devices' => Http::response([
                     'devices' => [['id' => 'device1', 'is_active' => true]],

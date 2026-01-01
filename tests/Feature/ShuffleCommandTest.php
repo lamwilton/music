@@ -2,115 +2,119 @@
 
 use App\Services\SpotifyService;
 
-test('shuffle command toggles shuffle state', function () {
-    $currentPlayback = [
-        'name' => 'Test Song',
-        'artist' => 'Test Artist',
-        'shuffle_state' => false,
-        'repeat_state' => 'off',
-    ];
+describe('ShuffleCommand', function () {
 
-    $this->mock(SpotifyService::class, function ($mock) use ($currentPlayback) {
-        $mock->shouldReceive('isConfigured')->once()->andReturn(true);
-        $mock->shouldReceive('getCurrentPlayback')->once()->andReturn($currentPlayback);
-        $mock->shouldReceive('setShuffle')->once()->with(true)->andReturn(true);
+    it('toggles shuffle state', function () {
+        $currentPlayback = [
+            'name' => 'Test Song',
+            'artist' => 'Test Artist',
+            'shuffle_state' => false,
+            'repeat_state' => 'off',
+        ];
+
+        $this->mock(SpotifyService::class, function ($mock) use ($currentPlayback) {
+            $mock->shouldReceive('isConfigured')->once()->andReturn(true);
+            $mock->shouldReceive('getCurrentPlayback')->once()->andReturn($currentPlayback);
+            $mock->shouldReceive('setShuffle')->once()->with(true)->andReturn(true);
+        });
+
+        $this->artisan('shuffle')
+            ->expectsOutput('🔀 Shuffle enabled')
+            ->assertExitCode(0);
     });
 
-    $this->artisan('shuffle')
-        ->expectsOutput('🔀 Shuffle enabled')
-        ->assertExitCode(0);
-});
+    it('enables shuffle when specified', function () {
+        $currentPlayback = [
+            'name' => 'Test Song',
+            'artist' => 'Test Artist',
+            'shuffle_state' => false,
+        ];
 
-test('shuffle command enables shuffle when specified', function () {
-    $currentPlayback = [
-        'name' => 'Test Song',
-        'artist' => 'Test Artist',
-        'shuffle_state' => false,
-    ];
+        $this->mock(SpotifyService::class, function ($mock) use ($currentPlayback) {
+            $mock->shouldReceive('isConfigured')->once()->andReturn(true);
+            $mock->shouldReceive('getCurrentPlayback')->once()->andReturn($currentPlayback);
+            $mock->shouldReceive('setShuffle')->once()->with(true)->andReturn(true);
+        });
 
-    $this->mock(SpotifyService::class, function ($mock) use ($currentPlayback) {
-        $mock->shouldReceive('isConfigured')->once()->andReturn(true);
-        $mock->shouldReceive('getCurrentPlayback')->once()->andReturn($currentPlayback);
-        $mock->shouldReceive('setShuffle')->once()->with(true)->andReturn(true);
+        $this->artisan('shuffle', ['state' => 'on'])
+            ->expectsOutput('🔀 Shuffle enabled')
+            ->assertExitCode(0);
     });
 
-    $this->artisan('shuffle', ['state' => 'on'])
-        ->expectsOutput('🔀 Shuffle enabled')
-        ->assertExitCode(0);
-});
+    it('disables shuffle when specified', function () {
+        $currentPlayback = [
+            'name' => 'Test Song',
+            'artist' => 'Test Artist',
+            'shuffle_state' => true,
+        ];
 
-test('shuffle command disables shuffle when specified', function () {
-    $currentPlayback = [
-        'name' => 'Test Song',
-        'artist' => 'Test Artist',
-        'shuffle_state' => true,
-    ];
+        $this->mock(SpotifyService::class, function ($mock) use ($currentPlayback) {
+            $mock->shouldReceive('isConfigured')->once()->andReturn(true);
+            $mock->shouldReceive('getCurrentPlayback')->once()->andReturn($currentPlayback);
+            $mock->shouldReceive('setShuffle')->once()->with(false)->andReturn(true);
+        });
 
-    $this->mock(SpotifyService::class, function ($mock) use ($currentPlayback) {
-        $mock->shouldReceive('isConfigured')->once()->andReturn(true);
-        $mock->shouldReceive('getCurrentPlayback')->once()->andReturn($currentPlayback);
-        $mock->shouldReceive('setShuffle')->once()->with(false)->andReturn(true);
+        $this->artisan('shuffle', ['state' => 'off'])
+            ->expectsOutput('➡️  Shuffle disabled')
+            ->assertExitCode(0);
     });
 
-    $this->artisan('shuffle', ['state' => 'off'])
-        ->expectsOutput('➡️  Shuffle disabled')
-        ->assertExitCode(0);
-});
+    it('handles invalid state', function () {
+        $currentPlayback = [
+            'name' => 'Test Song',
+            'artist' => 'Test Artist',
+            'shuffle_state' => false,
+        ];
 
-test('shuffle command handles invalid state', function () {
-    $currentPlayback = [
-        'name' => 'Test Song',
-        'artist' => 'Test Artist',
-        'shuffle_state' => false,
-    ];
+        $this->mock(SpotifyService::class, function ($mock) use ($currentPlayback) {
+            $mock->shouldReceive('isConfigured')->once()->andReturn(true);
+            $mock->shouldReceive('getCurrentPlayback')->once()->andReturn($currentPlayback);
+        });
 
-    $this->mock(SpotifyService::class, function ($mock) use ($currentPlayback) {
-        $mock->shouldReceive('isConfigured')->once()->andReturn(true);
-        $mock->shouldReceive('getCurrentPlayback')->once()->andReturn($currentPlayback);
+        $this->artisan('shuffle', ['state' => 'invalid'])
+            ->expectsOutput("❌ Failed to change shuffle: Invalid state: invalid. Use 'on', 'off', or 'toggle'")
+            ->assertExitCode(1);
     });
 
-    $this->artisan('shuffle', ['state' => 'invalid'])
-        ->expectsOutput("❌ Failed to change shuffle: Invalid state: invalid. Use 'on', 'off', or 'toggle'")
-        ->assertExitCode(1);
-});
+    it('requires active playback', function () {
+        $this->mock(SpotifyService::class, function ($mock) {
+            $mock->shouldReceive('isConfigured')->once()->andReturn(true);
+            $mock->shouldReceive('getCurrentPlayback')->once()->andReturn(null);
+        });
 
-test('shuffle command requires active playback', function () {
-    $this->mock(SpotifyService::class, function ($mock) {
-        $mock->shouldReceive('isConfigured')->once()->andReturn(true);
-        $mock->shouldReceive('getCurrentPlayback')->once()->andReturn(null);
+        $this->artisan('shuffle')
+            ->expectsOutput('⚠️  Nothing is currently playing')
+            ->expectsOutput('💡 Start playing something first')
+            ->assertExitCode(1);
     });
 
-    $this->artisan('shuffle')
-        ->expectsOutput('⚠️  Nothing is currently playing')
-        ->expectsOutput('💡 Start playing something first')
-        ->assertExitCode(1);
-});
+    it('requires configuration', function () {
+        $this->mock(SpotifyService::class, function ($mock) {
+            $mock->shouldReceive('isConfigured')->once()->andReturn(false);
+        });
 
-test('shuffle command requires configuration', function () {
-    $this->mock(SpotifyService::class, function ($mock) {
-        $mock->shouldReceive('isConfigured')->once()->andReturn(false);
+        $this->artisan('shuffle')
+            ->expectsOutput('❌ Spotify is not configured')
+            ->expectsOutput('💡 Run "spotify setup" first')
+            ->assertExitCode(1);
     });
 
-    $this->artisan('shuffle')
-        ->expectsOutput('❌ Spotify is not configured')
-        ->expectsOutput('💡 Run "spotify setup" first')
-        ->assertExitCode(1);
-});
+    it('outputs JSON when requested', function () {
+        $currentPlayback = [
+            'name' => 'Test Song',
+            'artist' => 'Test Artist',
+            'shuffle_state' => false,
+        ];
 
-test('shuffle command outputs JSON when requested', function () {
-    $currentPlayback = [
-        'name' => 'Test Song',
-        'artist' => 'Test Artist',
-        'shuffle_state' => false,
-    ];
+        $this->mock(SpotifyService::class, function ($mock) use ($currentPlayback) {
+            $mock->shouldReceive('isConfigured')->once()->andReturn(true);
+            $mock->shouldReceive('getCurrentPlayback')->once()->andReturn($currentPlayback);
+            $mock->shouldReceive('setShuffle')->once()->with(true)->andReturn(true);
+        });
 
-    $this->mock(SpotifyService::class, function ($mock) use ($currentPlayback) {
-        $mock->shouldReceive('isConfigured')->once()->andReturn(true);
-        $mock->shouldReceive('getCurrentPlayback')->once()->andReturn($currentPlayback);
-        $mock->shouldReceive('setShuffle')->once()->with(true)->andReturn(true);
+        $this->artisan('shuffle', ['--json' => true])
+            ->expectsOutput('{"shuffle":true,"message":"Shuffle enabled"}')
+            ->assertExitCode(0);
     });
 
-    $this->artisan('shuffle', ['--json' => true])
-        ->expectsOutput('{"shuffle":true,"message":"Shuffle enabled"}')
-        ->assertExitCode(0);
 });
