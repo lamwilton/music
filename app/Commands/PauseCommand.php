@@ -45,7 +45,7 @@ class PauseCommand extends Command
             $current = $spotify->getCurrentPlayback();
 
             $spotify->pause();
-            
+
             if ($this->option('json')) {
                 $this->line(json_encode([
                     'success' => true,
@@ -58,7 +58,7 @@ class PauseCommand extends Command
                 ]));
             } else {
                 $this->info('✅ Playback paused!');
-                
+
                 // Emit pause event
                 if ($current) {
                     $this->call('event:emit', [

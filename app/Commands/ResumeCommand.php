@@ -7,7 +7,7 @@ use LaravelZero\Framework\Commands\Command;
 
 class ResumeCommand extends Command
 {
-    protected $signature = 'resume 
+    protected $signature = 'resume
                             {--device= : Device name or ID to resume on}
                             {--json : Output as JSON}';
 

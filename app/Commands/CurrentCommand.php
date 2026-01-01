@@ -35,30 +35,8 @@ class CurrentCommand extends Command
         if (! $current) {
             $this->info('🔇 Nothing is currently playing');
 
-            // Emit event for checking status when nothing playing
-            $this->call('event:emit', [
-                'event' => 'playback.status_checked',
-                'data' => json_encode([
-                    'is_playing' => false,
-                    'has_track' => false,
-                ]),
-            ]);
-
             return self::SUCCESS;
         }
-
-        // Emit event for viewing current track
-        $this->call('event:emit', [
-            'event' => 'track.viewed',
-            'data' => json_encode([
-                'track' => $current['name'],
-                'artist' => $current['artist'],
-                'album' => $current['album'],
-                'progress_ms' => $current['progress_ms'],
-                'duration_ms' => $current['duration_ms'],
-                'is_playing' => $current['is_playing'],
-            ]),
-        ]);
 
         $this->info('🎵 Currently Playing:');
         $this->newLine();

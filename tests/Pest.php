@@ -2,6 +2,58 @@
 
 /*
 |--------------------------------------------------------------------------
+| mbstring Polyfill
+|--------------------------------------------------------------------------
+|
+| The mb_strimwidth function is not included in symfony/polyfill-mbstring.
+| This provides a basic implementation for testing environments without mbstring.
+|
+*/
+
+if (!function_exists('mb_strimwidth')) {
+    function mb_strimwidth(string $string, int $start, int $width, string $trim_marker = '', ?string $encoding = null): string
+    {
+        $encoding = $encoding ?? 'UTF-8';
+
+        // Get substring starting at $start
+        $str = mb_substr($string, $start, null, $encoding);
+
+        // If string width is within limit, return as is
+        if (mb_strwidth($str, $encoding) <= $width) {
+            return $str;
+        }
+
+        // Calculate width available for content (minus trim marker width)
+        $markerWidth = mb_strwidth($trim_marker, $encoding);
+        $availableWidth = $width - $markerWidth;
+
+        if ($availableWidth < 0) {
+            return $trim_marker;
+        }
+
+        // Truncate character by character until we fit
+        $result = '';
+        $currentWidth = 0;
+        $length = mb_strlen($str, $encoding);
+
+        for ($i = 0; $i < $length; $i++) {
+            $char = mb_substr($str, $i, 1, $encoding);
+            $charWidth = mb_strwidth($char, $encoding);
+
+            if ($currentWidth + $charWidth > $availableWidth) {
+                break;
+            }
+
+            $result .= $char;
+            $currentWidth += $charWidth;
+        }
+
+        return $result . $trim_marker;
+    }
+}
+
+/*
+|--------------------------------------------------------------------------
 | Test Case
 |--------------------------------------------------------------------------
 |

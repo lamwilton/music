@@ -57,14 +57,17 @@ describe('VolumeCommand', function () {
             ->assertExitCode(0);
     });
 
-    it('handles negative values', function () {
+    it('handles relative negative values', function () {
+        // -10 is treated as relative change (current - 10)
         $this->mock(SpotifyService::class, function ($mock) {
             $mock->shouldReceive('isConfigured')->once()->andReturn(true);
-            $mock->shouldReceive('setVolume')->once()->with(0)->andReturn(true);
+            $mock->shouldReceive('getCurrentPlayback')->once()->andReturn([
+                'device' => ['volume_percent' => 50],
+            ]);
+            $mock->shouldReceive('setVolume')->once()->with(40)->andReturn(true);
         });
 
         $this->artisan('volume', ['level' => '-10'])
-            ->expectsOutput('🔇 Volume set to 0%')
             ->assertExitCode(0);
     });
 

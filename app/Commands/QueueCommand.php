@@ -35,36 +35,13 @@ class QueueCommand extends Command
                 $spotify->addToQueue($result['uri']);
 
                 $this->info("➕ Added to queue: {$result['name']} by {$result['artist']}");
-                $this->info('📋 It will play after the current track');
-
-                // Emit queue event
-                $this->call('event:emit', [
-                    'event' => 'track.queued',
-                    'data' => json_encode([
-                        'track' => $result['name'],
-                        'artist' => $result['artist'],
-                        'uri' => $result['uri'],
-                        'search_query' => $query,
-                    ]),
-                ]);
-            } else {
+                $this->info('📋 It will play after the current track');            } else {
                 $this->warn("No results found for: {$query}");
 
                 return self::FAILURE;
             }
         } catch (\Exception $e) {
-            $this->error('Failed to add to queue: '.$e->getMessage());
-
-            // Emit error event
-            $this->call('event:emit', [
-                'event' => 'error.queue_failed',
-                'data' => json_encode([
-                    'command' => 'queue',
-                    'error' => $e->getMessage(),
-                ]),
-            ]);
-
-            return self::FAILURE;
+            $this->error('Failed to add to queue: '.$e->getMessage());            return self::FAILURE;
         }
 
         $this->info('✅ Successfully added to queue!');

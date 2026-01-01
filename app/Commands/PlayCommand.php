@@ -7,9 +7,9 @@ use LaravelZero\Framework\Commands\Command;
 
 class PlayCommand extends Command
 {
-    protected $signature = 'play 
-                            {query : Song, artist, or playlist to play} 
-                            {--device= : Device name or ID to play on} 
+    protected $signature = 'play
+                            {query : Song, artist, or playlist to play}
+                            {--device= : Device name or ID to play on}
                             {--queue : Add to queue instead of playing immediately}
                             {--json : Output as JSON}';
 
@@ -68,7 +68,7 @@ class PlayCommand extends Command
                 if ($this->option('queue')) {
                     // Add to queue instead of playing
                     $spotify->addToQueue($result['uri']);
-                    
+
                     if ($this->option('json')) {
                         $this->line(json_encode([
                             'success' => true,
@@ -108,7 +108,7 @@ class PlayCommand extends Command
                 } else {
                     // Play immediately
                     $spotify->play($result['uri'], $deviceId);
-                    
+
                     if ($this->option('json')) {
                         $this->line(json_encode([
                             'success' => true,

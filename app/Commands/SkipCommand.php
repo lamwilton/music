@@ -10,7 +10,7 @@ use function Laravel\Prompts\info;
 
 class SkipCommand extends Command
 {
-    protected $signature = 'skip 
+    protected $signature = 'skip
                             {direction? : next or prev (default: next)}
                             {--json : Output as JSON}';
 
@@ -44,7 +44,7 @@ class SkipCommand extends Command
             // Show what's playing now
             sleep(1); // Give Spotify a moment to update
             $current = $spotify->getCurrentPlayback();
-            
+
             if ($this->option('json')) {
                 $this->line(json_encode([
                     'success' => true,
