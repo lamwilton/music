@@ -12,9 +12,9 @@ class SpotifyService
 
     private ?int $expiresAt = null;
 
-    private string $clientId;
+    private ?string $clientId;
 
-    private string $clientSecret;
+    private ?string $clientSecret;
 
     private string $baseUri = 'https://api.spotify.com/v1/';
 

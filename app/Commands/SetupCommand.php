@@ -50,7 +50,7 @@ class SetupCommand extends Command
         ]);
 
         info('✅ Spotify credentials cleared');
-        note('Run: music setup');
+        note('Run: spotify setup');
 
         return self::SUCCESS;
     }
@@ -60,8 +60,8 @@ class SetupCommand extends Command
         // Check if already configured
         if ($this->hasStoredCredentials() && ! $this->option('reset')) {
             info('✅ Spotify is already configured');
-            note('Run: music login (if not authenticated)');
-            note('Run: music setup --reset (to reconfigure)');
+            note('Run: spotify login (if not authenticated)');
+            note('Run: spotify setup --reset (to reconfigure)');
 
             return self::SUCCESS;
         }
@@ -301,26 +301,22 @@ class SetupCommand extends Command
 
     private function storeCredentials(array $credentials): void
     {
-        // Store in the component's .env file
-        $envFile = base_path('.env');
+        // Store in ~/.shit-music/credentials.json (PHAR-compatible)
+        $configDir = \App\Helpers\ConfigHelper::configDir();
 
-        // But ALSO store in the parent app's .env if we're running as a component
-        $parentEnvFile = dirname(dirname(base_path())).'/.env';
+        // Ensure directory exists
+        if (! is_dir($configDir)) {
+            mkdir($configDir, 0755, true);
+        }
 
-        // Store in component's .env
-        $envContent = file_exists($envFile) ? file_get_contents($envFile) : '';
+        $credentialsFile = $configDir.'/credentials.json';
+        file_put_contents($credentialsFile, json_encode([
+            'client_id' => $credentials['client_id'],
+            'client_secret' => $credentials['client_secret'],
+        ], JSON_PRETTY_PRINT));
 
-        // Remove old values if they exist
-        $envContent = preg_replace('/^SPOTIFY_CLIENT_ID=.*/m', '', $envContent);
-        $envContent = preg_replace('/^SPOTIFY_CLIENT_SECRET=.*/m', '', $envContent);
-        $envContent = trim($envContent);
-
-        // Add new values
-        $envContent .= "\n\n# Spotify API Credentials\n";
-        $envContent .= "SPOTIFY_CLIENT_ID={$credentials['client_id']}\n";
-        $envContent .= "SPOTIFY_CLIENT_SECRET={$credentials['client_secret']}\n";
-
-        file_put_contents($envFile, $envContent);
+        // Secure the file
+        chmod($credentialsFile, 0600);
     }
 
     private function testSpotifyConnection(array $credentials): bool
@@ -350,42 +346,34 @@ class SetupCommand extends Command
         info('🎉 Spotify CLI setup complete!');
 
         note('🚀 What\'s next?');
-        note('1. 🔐 music login (authenticate with Spotify)');
-        note('2. 🎵 music current (see what\'s playing)');
-        note('3. ▶️  music play "Never Gonna Give You Up"');
-        note('4. ⏸️  music pause');
+        note('1. 🔐 spotify login (authenticate with Spotify)');
+        note('2. 🎵 spotify current (see what\'s playing)');
+        note('3. ▶️  spotify play "Never Gonna Give You Up"');
+        note('4. ⏸️  spotify pause');
 
         note('💡 Pro Tips:');
-        note("• Run music setup --reset to reconfigure");
-        note("• Your token is stored securely in ~/.config/spotify-cli/");
+        note('• Run spotify setup --reset to reconfigure');
+        note('• Your credentials are stored securely in ~/.shit-music/');
         note('• All commands support --help for usage info');
     }
 
     private function hasStoredCredentials(): bool
     {
-        $envFile = base_path('.env');
-        if (! file_exists($envFile)) {
-            return false;
-        }
-
-        $envContent = file_get_contents($envFile);
-
-        return str_contains($envContent, 'SPOTIFY_CLIENT_ID') &&
-               str_contains($envContent, 'SPOTIFY_CLIENT_SECRET');
+        return \App\Helpers\ConfigHelper::hasCredentials();
     }
 
     private function clearStoredCredentials(): void
     {
-        $envFile = base_path('.env');
-        if (file_exists($envFile)) {
-            $envContent = file_get_contents($envFile);
-            $envContent = preg_replace('/^SPOTIFY_CLIENT_ID=.*/m', '', $envContent);
-            $envContent = preg_replace('/^SPOTIFY_CLIENT_SECRET=.*/m', '', $envContent);
-            file_put_contents($envFile, trim($envContent));
+        $configDir = \App\Helpers\ConfigHelper::configDir();
+
+        // Clear credentials file
+        $credentialsFile = $configDir.'/credentials.json';
+        if (file_exists($credentialsFile)) {
+            unlink($credentialsFile);
         }
 
-        // Clear token from config directory (PHAR compatible path)
-        $tokenFile = config('spotify.token_path');
+        // Clear token from config directory
+        $tokenFile = \App\Helpers\ConfigHelper::tokenPath();
         if (file_exists($tokenFile)) {
             unlink($tokenFile);
         }

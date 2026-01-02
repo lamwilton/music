@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Commands\Concerns\RequiresSpotifyConfig;
 use App\Services\SpotifyService;
 use LaravelZero\Framework\Commands\Command;
 
@@ -10,6 +11,8 @@ use function Laravel\Prompts\info;
 
 class SkipCommand extends Command
 {
+    use RequiresSpotifyConfig;
+
     protected $signature = 'skip
                             {direction? : next or prev (default: next)}
                             {--json : Output as JSON}';
@@ -18,10 +21,7 @@ class SkipCommand extends Command
 
     public function handle(SpotifyService $spotify)
     {
-        if (! $spotify->isConfigured()) {
-            error('❌ Spotify not configured');
-            info('💡 Run "spotify setup" to get started');
-
+        if (! $this->ensureConfigured()) {
             return self::FAILURE;
         }
 
@@ -52,13 +52,13 @@ class SkipCommand extends Command
                     'previous' => $before ? [
                         'name' => $before['name'],
                         'artist' => $before['artist'],
-                        'progress_ms' => $before['progress_ms'] ?? 0
+                        'progress_ms' => $before['progress_ms'] ?? 0,
                     ] : null,
                     'current' => $current ? [
                         'name' => $current['name'],
                         'artist' => $current['artist'],
-                        'album' => $current['album']
-                    ] : null
+                        'album' => $current['album'],
+                    ] : null,
                 ]));
             } else {
                 info("{$emoji}  Skipped to {$skippedDirection} track");
@@ -68,7 +68,7 @@ class SkipCommand extends Command
             }
 
             // Emit skip event
-            if ($before && !$this->option('json')) {
+            if ($before && ! $this->option('json')) {
                 $this->call('event:emit', [
                     'event' => 'track.skipped',
                     'data' => json_encode([
@@ -85,7 +85,7 @@ class SkipCommand extends Command
             if ($this->option('json')) {
                 $this->line(json_encode([
                     'success' => false,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]));
             } else {
                 error('❌ '.$e->getMessage());

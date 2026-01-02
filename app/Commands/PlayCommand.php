@@ -2,11 +2,14 @@
 
 namespace App\Commands;
 
+use App\Commands\Concerns\RequiresSpotifyConfig;
 use App\Services\SpotifyService;
 use LaravelZero\Framework\Commands\Command;
 
 class PlayCommand extends Command
 {
+    use RequiresSpotifyConfig;
+
     protected $signature = 'play
                             {query : Song, artist, or playlist to play}
                             {--device= : Device name or ID to play on}
@@ -17,15 +20,11 @@ class PlayCommand extends Command
 
     public function handle()
     {
-        $spotify = app(SpotifyService::class);
-
-        if (! $spotify->isConfigured()) {
-            $this->error('❌ Spotify is not configured');
-            $this->info('💡 Run "spotify setup" to configure Spotify');
-            $this->info('💡 Or set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET env vars');
-
+        if (! $this->ensureConfigured()) {
             return self::FAILURE;
         }
+
+        $spotify = app(SpotifyService::class);
 
         $query = $this->argument('query');
         $deviceName = $this->option('device');
@@ -57,7 +56,7 @@ class PlayCommand extends Command
             }
         }
 
-        if (!$this->option('json')) {
+        if (! $this->option('json')) {
             $this->info("🎵 Searching for: {$query}");
         }
 
@@ -76,9 +75,9 @@ class PlayCommand extends Command
                             'track' => [
                                 'name' => $result['name'],
                                 'artist' => $result['artist'],
-                                'uri' => $result['uri']
+                                'uri' => $result['uri'],
                             ],
-                            'search_query' => $query
+                            'search_query' => $query,
                         ]));
                         // Still emit the event but suppress output
                         $this->callSilently('event:emit', [
@@ -116,10 +115,10 @@ class PlayCommand extends Command
                             'track' => [
                                 'name' => $result['name'],
                                 'artist' => $result['artist'],
-                                'uri' => $result['uri']
+                                'uri' => $result['uri'],
                             ],
                             'device_id' => $deviceId,
-                            'search_query' => $query
+                            'search_query' => $query,
                         ]));
                         // Still emit the event but suppress output
                         $this->callSilently('event:emit', [
@@ -150,7 +149,7 @@ class PlayCommand extends Command
                 if ($this->option('json')) {
                     $this->line(json_encode([
                         'success' => false,
-                        'error' => "No results found for: {$query}"
+                        'error' => "No results found for: {$query}",
                     ]));
                 } else {
                     $this->warn("No results found for: {$query}");
@@ -162,7 +161,7 @@ class PlayCommand extends Command
             if ($this->option('json')) {
                 $this->line(json_encode([
                     'success' => false,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]));
             } else {
                 $this->error('Failed to play: '.$e->getMessage());
@@ -181,7 +180,7 @@ class PlayCommand extends Command
             return self::FAILURE;
         }
 
-        if (!$this->option('json')) {
+        if (! $this->option('json')) {
             $this->info('✅ Playback started!');
         }
 

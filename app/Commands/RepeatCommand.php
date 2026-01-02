@@ -2,12 +2,15 @@
 
 namespace App\Commands;
 
+use App\Commands\Concerns\RequiresSpotifyConfig;
 use App\Services\SpotifyService;
 use LaravelZero\Framework\Commands\Command;
 
 class RepeatCommand extends Command
 {
-    protected $signature = 'repeat 
+    use RequiresSpotifyConfig;
+
+    protected $signature = 'repeat
                             {state? : off/track/context/toggle - defaults to toggle}
                             {--json : Output as JSON}';
 
@@ -15,14 +18,11 @@ class RepeatCommand extends Command
 
     public function handle()
     {
-        $spotify = app(SpotifyService::class);
-
-        if (! $spotify->isConfigured()) {
-            $this->error('❌ Spotify is not configured');
-            $this->info('💡 Run "spotify setup" first');
-
+        if (! $this->ensureConfigured()) {
             return self::FAILURE;
         }
+
+        $spotify = app(SpotifyService::class);
 
         $state = strtolower($this->argument('state') ?? 'toggle');
 
@@ -68,7 +68,7 @@ class RepeatCommand extends Command
             }
 
             // Emit event (but suppress output in JSON mode)
-            if (!$this->option('json')) {
+            if (! $this->option('json')) {
                 $this->call('event:emit', [
                     'event' => 'playback.repeat',
                     'data' => json_encode([

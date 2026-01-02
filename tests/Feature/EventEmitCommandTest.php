@@ -7,7 +7,7 @@ describe('EventEmitCommand', function () {
     beforeEach(function () {
         // Use unique file per test process to avoid parallel test interference
         $this->testId = uniqid('test_', true);
-        $this->eventsFile = sys_get_temp_dir() . '/spotify-events-' . $this->testId . '.jsonl';
+        $this->eventsFile = sys_get_temp_dir().'/spotify-events-'.$this->testId.'.jsonl';
         if (file_exists($this->eventsFile)) {
             unlink($this->eventsFile);
         }
@@ -87,8 +87,8 @@ describe('EventEmitCommand', function () {
 
         it('creates storage directory if it does not exist', function () {
             // Use a unique subdirectory within storage for this test
-            $testDir = base_path('storage/test-emit-' . uniqid());
-            $testEventsFile = $testDir . '/events.jsonl';
+            $testDir = base_path('storage/test-emit-'.uniqid());
+            $testEventsFile = $testDir.'/events.jsonl';
 
             try {
                 // Verify the test directory doesn't exist
@@ -96,14 +96,14 @@ describe('EventEmitCommand', function () {
 
                 // Create the directory via the command's logic simulation
                 // Since we can't easily change base_path, we test the mkdir logic directly
-                if (!is_dir($testDir)) {
+                if (! is_dir($testDir)) {
                     mkdir($testDir, 0755, true);
                 }
 
                 expect(is_dir($testDir))->toBeTrue();
 
                 // Write a test event file to verify the full flow
-                file_put_contents($testEventsFile, json_encode(['test' => true]) . "\n");
+                file_put_contents($testEventsFile, json_encode(['test' => true])."\n");
                 expect(file_exists($testEventsFile))->toBeTrue();
             } finally {
                 // Cleanup
@@ -120,7 +120,7 @@ describe('EventEmitCommand', function () {
             $storageDir = base_path('storage');
 
             // Ensure directory exists
-            if (!is_dir($storageDir)) {
+            if (! is_dir($storageDir)) {
                 mkdir($storageDir, 0755, true);
             }
             expect(is_dir($storageDir))->toBeTrue();
@@ -150,7 +150,7 @@ describe('EventEmitCommand', function () {
 
             expect($lines)->toHaveCount(3);
 
-            $events = array_map(fn($line) => json_decode($line, true), $lines);
+            $events = array_map(fn ($line) => json_decode($line, true), $lines);
             expect($events[0]['event'])->toBe('spotify.first');
             expect($events[1]['event'])->toBe('spotify.second');
             expect($events[2]['event'])->toBe('spotify.third');
@@ -159,7 +159,7 @@ describe('EventEmitCommand', function () {
         it('appends to existing file content', function () {
             // Create directory if it doesn't exist
             $storageDir = dirname($this->eventsFile);
-            if (!is_dir($storageDir)) {
+            if (! is_dir($storageDir)) {
                 mkdir($storageDir, 0755, true);
             }
 
@@ -169,7 +169,7 @@ describe('EventEmitCommand', function () {
                 'event' => 'pre.existing',
                 'data' => [],
                 'timestamp' => '2024-01-01T00:00:00+00:00',
-            ]) . "\n";
+            ])."\n";
             file_put_contents($this->eventsFile, $existingEvent);
 
             $this->artisan('event:emit', ['event' => 'new.event'])

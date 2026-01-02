@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Commands\Concerns\RequiresSpotifyConfig;
 use App\Services\SpotifyService;
 use LaravelZero\Framework\Commands\Command;
 
@@ -12,6 +13,8 @@ use function Laravel\Prompts\warning;
 
 class DaemonCommand extends Command
 {
+    use RequiresSpotifyConfig;
+
     protected $signature = 'daemon {action : start, stop, or status}';
 
     protected $description = 'Manage the spotifyd/librespot daemon for terminal playback';
@@ -68,13 +71,11 @@ class DaemonCommand extends Command
         }
 
         // Get Spotify credentials
-        $spotify = new SpotifyService;
-        if (! $spotify->isConfigured()) {
-            error('Spotify not configured');
-            info('Run "spotify setup" and "spotify login" first');
-
+        if (! $this->ensureConfigured()) {
             return self::FAILURE;
         }
+
+        $spotify = app(SpotifyService::class);
 
         // Create config directory if needed
         if (! is_dir($this->configDir)) {
@@ -99,7 +100,9 @@ class DaemonCommand extends Command
                 info("Daemon started successfully (PID: {$pid})");
                 info('');
                 info('The daemon will appear as a Spotify Connect device.');
-                info('Use "spotify devices" to see it and "spotify play" to start playback.');                return self::SUCCESS;
+                info('Use "spotify devices" to see it and "spotify play" to start playback.');
+
+                return self::SUCCESS;
             } else {
                 error('Failed to start daemon');
 
@@ -148,7 +151,9 @@ class DaemonCommand extends Command
             // Remove PID file
             unlink($this->pidFile);
 
-            info('Daemon stopped successfully');            return self::SUCCESS;
+            info('Daemon stopped successfully');
+
+            return self::SUCCESS;
         } catch (\Exception $e) {
             error('Failed to stop daemon: '.$e->getMessage());
 
@@ -176,7 +181,9 @@ class DaemonCommand extends Command
         } else {
             warning('Daemon is not running');
             info('Use "spotify daemon start" to start it');
-        }        return self::SUCCESS;
+        }
+
+return self::SUCCESS;
     }
 
     private function invalidAction(string $action): int

@@ -77,7 +77,7 @@ describe('QueueCommand', function () {
 
         $this->artisan('queue', ['query' => 'test'])
             ->expectsOutput('❌ Spotify is not configured')
-            ->expectsOutput('💡 Run "spotify setup" to configure Spotify')
+            ->expectsOutputToContain('Run "spotify setup"')
             ->assertExitCode(1);
     });
 

@@ -23,8 +23,9 @@ class EventEmitCommand extends Command
             'timestamp' => now()->toIso8601String(),
         ];
 
-        // Store events in storage directory (configurable for testing)
-        $queueFile = config('app.events_file', base_path('storage/events.jsonl'));
+        // Store events in config directory (PHAR-compatible, configurable for testing)
+        $configDir = config('spotify.config_dir', ($_SERVER['HOME'] ?? getenv('HOME')).'/.config/spotify-cli');
+        $queueFile = config('app.events_file', $configDir.'/events.jsonl');
 
         // Ensure directory exists
         $dir = dirname($queueFile);

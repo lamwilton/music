@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Commands\Concerns\RequiresSpotifyConfig;
 use App\Services\SpotifyService;
 use LaravelZero\Framework\Commands\Command;
 
@@ -9,20 +10,19 @@ use function Laravel\Prompts\select;
 
 class DevicesCommand extends Command
 {
+    use RequiresSpotifyConfig;
+
     protected $signature = 'devices {--switch : Switch to a different device}';
 
     protected $description = 'List or switch Spotify devices';
 
     public function handle()
     {
-        $spotify = app(SpotifyService::class);
-
-        if (! $spotify->isConfigured()) {
-            $this->error('❌ Spotify not configured');
-            $this->info('💡 Run "spotify setup" first');
-
+        if (! $this->ensureConfigured()) {
             return self::FAILURE;
         }
+
+        $spotify = app(SpotifyService::class);
 
         try {
             $devices = $spotify->getDevices();

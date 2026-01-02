@@ -2,25 +2,25 @@
 
 namespace App\Commands;
 
+use App\Commands\Concerns\RequiresSpotifyConfig;
 use App\Services\SpotifyService;
 use LaravelZero\Framework\Commands\Command;
 
 class CurrentCommand extends Command
 {
+    use RequiresSpotifyConfig;
+
     protected $signature = 'current {--json : Output as JSON}';
 
     protected $description = 'Show current track';
 
     public function handle()
     {
-        $spotify = app(SpotifyService::class);
-
-        if (! $spotify->isConfigured()) {
-            $this->error('❌ Spotify is not configured');
-            $this->info('💡 Run "spotify setup" first');
-
+        if (! $this->ensureConfigured()) {
             return self::FAILURE;
         }
+
+        $spotify = app(SpotifyService::class);
 
         $current = $spotify->getCurrentPlayback();
 

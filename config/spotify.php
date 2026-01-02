@@ -1,5 +1,13 @@
 <?php
 
+// Load credentials from file if not in env
+$configDir = ($_SERVER['HOME'] ?? getenv('HOME')).'/.shit-music';
+$credentialsFile = $configDir.'/credentials.json';
+$credentials = [];
+if (file_exists($credentialsFile)) {
+    $credentials = json_decode(file_get_contents($credentialsFile), true) ?? [];
+}
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -10,8 +18,8 @@ return [
     |
     */
 
-    'client_id' => env('SPOTIFY_CLIENT_ID'),
-    'client_secret' => env('SPOTIFY_CLIENT_SECRET'),
+    'client_id' => env('SPOTIFY_CLIENT_ID', $credentials['client_id'] ?? null),
+    'client_secret' => env('SPOTIFY_CLIENT_SECRET', $credentials['client_secret'] ?? null),
 
     'redirect_uri' => env('SPOTIFY_REDIRECT_URI', 'http://127.0.0.1:8888/callback'),
 
@@ -34,7 +42,7 @@ return [
     |
     */
 
-    'token_path' => env('SPOTIFY_TOKEN_PATH', ($_SERVER['HOME'] ?? getenv('HOME')).'/.config/spotify-cli/token.json'),
+    'token_path' => env('SPOTIFY_TOKEN_PATH', $configDir.'/token.json'),
 
     /*
     |--------------------------------------------------------------------------
@@ -45,5 +53,5 @@ return [
     |
     */
 
-    'config_dir' => env('SPOTIFY_CONFIG_DIR', ($_SERVER['HOME'] ?? getenv('HOME')).'/.config/spotify-cli'),
+    'config_dir' => env('SPOTIFY_CONFIG_DIR', $configDir),
 ];

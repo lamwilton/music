@@ -1,36 +1,25 @@
 <?php
 
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Process;
 use Laravel\Prompts\Prompt;
 
 describe('SetupCommand', function () {
 
     beforeEach(function () {
-        // Ensure we have a clean .env file for each test
-        $envFile = base_path('.env');
-        if (file_exists($envFile)) {
-            $this->originalEnv = file_get_contents($envFile);
-        } else {
-            $this->originalEnv = null;
-        }
+        // Use a temp directory for credentials during tests
+        $this->testConfigDir = sys_get_temp_dir().'/shit-music-test-'.uniqid();
+        mkdir($this->testConfigDir, 0755, true);
+        config(['spotify.config_dir' => $this->testConfigDir]);
 
         // Mock Process for browser opening and clipboard
         Process::fake();
     });
 
     afterEach(function () {
-        // Restore original .env file
-        $envFile = base_path('.env');
-        if ($this->originalEnv !== null) {
-            file_put_contents($envFile, $this->originalEnv);
-        } elseif (file_exists($envFile)) {
-            // Remove credentials we may have added
-            $content = file_get_contents($envFile);
-            $content = preg_replace('/^SPOTIFY_CLIENT_ID=.*/m', '', $content);
-            $content = preg_replace('/^SPOTIFY_CLIENT_SECRET=.*/m', '', $content);
-            $content = preg_replace('/# Spotify API Credentials\n?/', '', $content);
-            file_put_contents($envFile, trim($content));
+        // Clean up test config directory
+        if (is_dir($this->testConfigDir)) {
+            array_map('unlink', glob($this->testConfigDir.'/*'));
+            rmdir($this->testConfigDir);
         }
 
         // Restore interactive mode
@@ -40,11 +29,12 @@ describe('SetupCommand', function () {
     describe('already configured', function () {
 
         it('shows already configured message when credentials exist', function () {
-            $envFile = base_path('.env');
-            $content = file_exists($envFile) ? file_get_contents($envFile) : '';
-            $content .= "\nSPOTIFY_CLIENT_ID=existingclientid1234567890\n";
-            $content .= "SPOTIFY_CLIENT_SECRET=existingclientsecret12345\n";
-            file_put_contents($envFile, $content);
+            // Write credentials to the test config directory
+            $credentialsFile = $this->testConfigDir.'/credentials.json';
+            file_put_contents($credentialsFile, json_encode([
+                'client_id' => 'existingclientid1234567890',
+                'client_secret' => 'existingclientsecret12345',
+            ]));
 
             $this->artisan('setup')
                 ->expectsOutputToContain('Spotify is already configured')
@@ -90,7 +80,7 @@ describe('SetupCommand', function () {
             $envFile = base_path('.env');
 
             // Ensure env file exists for testing
-            if (!file_exists($envFile)) {
+            if (! file_exists($envFile)) {
                 file_put_contents($envFile, '');
             }
 

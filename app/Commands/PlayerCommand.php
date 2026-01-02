@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Commands\Concerns\RequiresSpotifyConfig;
 use App\Services\SpotifyService;
 use LaravelZero\Framework\Commands\Command;
 
@@ -11,6 +12,8 @@ use function Laravel\Prompts\spin;
 
 class PlayerCommand extends Command
 {
+    use RequiresSpotifyConfig;
+
     protected $signature = 'player';
 
     protected $description = '🎵 Interactive Spotify player with visual controls';
@@ -21,14 +24,11 @@ class PlayerCommand extends Command
 
     public function handle()
     {
-        $this->spotify = app(SpotifyService::class);
-
-        if (! $this->spotify->isConfigured()) {
-            $this->error('❌ Spotify is not configured');
-            $this->info('💡 Run "spotify setup" first');
-
+        if (! $this->ensureConfigured()) {
             return self::FAILURE;
         }
+
+        $this->spotify = app(SpotifyService::class);
 
         // Check if we're in an interactive terminal
         if (! $this->input->isInteractive()) {

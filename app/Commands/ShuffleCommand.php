@@ -2,12 +2,15 @@
 
 namespace App\Commands;
 
+use App\Commands\Concerns\RequiresSpotifyConfig;
 use App\Services\SpotifyService;
 use LaravelZero\Framework\Commands\Command;
 
 class ShuffleCommand extends Command
 {
-    protected $signature = 'shuffle 
+    use RequiresSpotifyConfig;
+
+    protected $signature = 'shuffle
                             {state? : on/off/toggle - defaults to toggle}
                             {--json : Output as JSON}';
 
@@ -15,14 +18,11 @@ class ShuffleCommand extends Command
 
     public function handle()
     {
-        $spotify = app(SpotifyService::class);
-
-        if (! $spotify->isConfigured()) {
-            $this->error('❌ Spotify is not configured');
-            $this->info('💡 Run "spotify setup" first');
-
+        if (! $this->ensureConfigured()) {
             return self::FAILURE;
         }
+
+        $spotify = app(SpotifyService::class);
 
         $state = strtolower($this->argument('state') ?? 'toggle');
 
@@ -63,7 +63,7 @@ class ShuffleCommand extends Command
             }
 
             // Emit event (but suppress output in JSON mode)
-            if (!$this->option('json')) {
+            if (! $this->option('json')) {
                 $this->call('event:emit', [
                     'event' => 'playback.shuffle',
                     'data' => json_encode([

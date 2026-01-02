@@ -10,7 +10,7 @@
 |
 */
 
-if (!function_exists('mb_strimwidth')) {
+if (! function_exists('mb_strimwidth')) {
     function mb_strimwidth(string $string, int $start, int $width, string $trim_marker = '', ?string $encoding = null): string
     {
         $encoding = $encoding ?? 'UTF-8';
@@ -48,7 +48,7 @@ if (!function_exists('mb_strimwidth')) {
             $currentWidth += $charWidth;
         }
 
-        return $result . $trim_marker;
+        return $result.$trim_marker;
     }
 }
 

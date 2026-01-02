@@ -69,7 +69,7 @@ describe('DevicesCommand', function () {
         });
 
         $this->artisan('devices')
-            ->expectsOutput('❌ Spotify not configured')
+            ->expectsOutputToContain('Spotify is not configured')
             ->expectsOutput('💡 Run "spotify setup" first')
             ->assertExitCode(1);
     });

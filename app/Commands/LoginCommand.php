@@ -2,6 +2,7 @@
 
 namespace App\Commands;
 
+use App\Helpers\ConfigHelper;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Process;
 use LaravelZero\Framework\Commands\Command;
@@ -20,12 +21,14 @@ class LoginCommand extends Command
 
     public function handle()
     {
-        $clientId = config('spotify.client_id');
-        $clientSecret = config('spotify.client_secret');
+        // Always read credentials fresh from file (bypasses config cache)
+        $credentials = ConfigHelper::getCredentials();
+        $clientId = $credentials['client_id'] ?? null;
+        $clientSecret = $credentials['client_secret'] ?? null;
 
         if (! $clientId || ! $clientSecret) {
             error('❌ Missing Spotify credentials');
-            info('💡 Run "music setup" to get started');
+            info('💡 Run "spotify setup" to get started');
 
             return self::FAILURE;
         }
@@ -159,9 +162,9 @@ class LoginCommand extends Command
         info('✅ Successfully authenticated with Spotify!');
         info('');
         info('Try these commands:');
-        info('  music play "Never Gonna Give You Up"');
-        info('  music pause');
-        info('  music current');
+        info('  spotify play "Never Gonna Give You Up"');
+        info('  spotify pause');
+        info('  spotify current');
 
         return self::SUCCESS;
     }

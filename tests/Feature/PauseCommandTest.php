@@ -43,8 +43,8 @@ describe('PauseCommand', function () {
 
         $this->artisan('pause')
             ->expectsOutput('❌ Spotify is not configured')
-            ->expectsOutput('💡 Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET env vars')
-            ->expectsOutput('💡 Then run "music login" to authenticate')
+            ->expectsOutputToContain('Run "spotify setup" first')
+
             ->assertExitCode(1);
     });
 

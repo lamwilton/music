@@ -2,41 +2,27 @@
 
 namespace App\Commands;
 
+use App\Commands\Concerns\RequiresSpotifyConfig;
 use App\Services\SpotifyService;
 use LaravelZero\Framework\Commands\Command;
 
 class PauseCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
+    use RequiresSpotifyConfig;
+
     protected $signature = 'pause {--json : Output as JSON}';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Pause Spotify playback';
 
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
-        $spotify = app(SpotifyService::class);
-
-        if (! $spotify->isConfigured()) {
-            $this->error('❌ Spotify is not configured');
-            $this->info('💡 Set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET env vars');
-            $this->info('💡 Then run "music login" to authenticate');
-
+        if (! $this->ensureConfigured()) {
             return self::FAILURE;
         }
 
-        if (!$this->option('json')) {
+        $spotify = app(SpotifyService::class);
+
+        if (! $this->option('json')) {
             $this->info('⏸️  Pausing Spotify playback...');
         }
 
@@ -53,8 +39,8 @@ class PauseCommand extends Command
                     'track' => $current ? [
                         'name' => $current['name'],
                         'artist' => $current['artist'],
-                        'paused_at' => $current['progress_ms']
-                    ] : null
+                        'paused_at' => $current['progress_ms'],
+                    ] : null,
                 ]));
             } else {
                 $this->info('✅ Playback paused!');
@@ -75,7 +61,7 @@ class PauseCommand extends Command
             if ($this->option('json')) {
                 $this->line(json_encode([
                     'success' => false,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]));
             } else {
                 $this->error('❌ Failed to pause: '.$e->getMessage());

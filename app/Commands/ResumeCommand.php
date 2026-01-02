@@ -2,11 +2,14 @@
 
 namespace App\Commands;
 
+use App\Commands\Concerns\RequiresSpotifyConfig;
 use App\Services\SpotifyService;
 use LaravelZero\Framework\Commands\Command;
 
 class ResumeCommand extends Command
 {
+    use RequiresSpotifyConfig;
+
     protected $signature = 'resume
                             {--device= : Device name or ID to resume on}
                             {--json : Output as JSON}';
@@ -15,15 +18,11 @@ class ResumeCommand extends Command
 
     public function handle()
     {
-        $spotify = app(SpotifyService::class);
-
-        if (! $spotify->isConfigured()) {
-            $this->error('❌ Spotify is not configured');
-            $this->info('💡 Run "spotify setup" to configure Spotify');
-            $this->info('💡 Or set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET env vars');
-
+        if (! $this->ensureConfigured()) {
             return self::FAILURE;
         }
+
+        $spotify = app(SpotifyService::class);
 
         $deviceName = $this->option('device');
 
@@ -46,7 +45,7 @@ class ResumeCommand extends Command
             }
         }
 
-        if (!$this->option('json')) {
+        if (! $this->option('json')) {
             $this->info('▶️  Resuming Spotify playback...');
         }
 
@@ -69,8 +68,8 @@ class ResumeCommand extends Command
                     'track' => $current ? [
                         'name' => $current['name'],
                         'artist' => $current['artist'],
-                        'album' => $current['album']
-                    ] : null
+                        'album' => $current['album'],
+                    ] : null,
                 ]));
                 // Still emit the event but suppress output
                 $this->callSilently('event:emit', [
@@ -103,7 +102,7 @@ class ResumeCommand extends Command
             if ($this->option('json')) {
                 $this->line(json_encode([
                     'success' => false,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]));
             } else {
                 $this->error('Failed to resume: '.$e->getMessage());

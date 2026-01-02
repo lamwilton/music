@@ -91,9 +91,8 @@ describe('ResumeCommand', function () {
         });
 
         $this->artisan('resume')
-            ->expectsOutput('❌ Spotify is not configured')
-            ->expectsOutput('💡 Run "spotify setup" to configure Spotify')
-            ->expectsOutput('💡 Or set SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET env vars')
+            ->expectsOutputToContain('Spotify is not configured')
+            ->expectsOutputToContain('Run "spotify setup"')
             ->assertExitCode(1);
     });
 

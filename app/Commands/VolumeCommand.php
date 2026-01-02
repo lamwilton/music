@@ -2,12 +2,15 @@
 
 namespace App\Commands;
 
+use App\Commands\Concerns\RequiresSpotifyConfig;
 use App\Services\SpotifyService;
 use LaravelZero\Framework\Commands\Command;
 
 class VolumeCommand extends Command
 {
-    protected $signature = 'volume 
+    use RequiresSpotifyConfig;
+
+    protected $signature = 'volume
                             {level? : Volume level (0-100) or +/- for relative change}
                             {--json : Output as JSON}';
 
@@ -15,14 +18,11 @@ class VolumeCommand extends Command
 
     public function handle()
     {
-        $spotify = app(SpotifyService::class);
-
-        if (! $spotify->isConfigured()) {
-            $this->error('❌ Spotify is not configured');
-            $this->info('💡 Run "spotify setup" first');
-
+        if (! $this->ensureConfigured()) {
             return self::FAILURE;
         }
+
+        $spotify = app(SpotifyService::class);
 
         $level = $this->argument('level');
 
