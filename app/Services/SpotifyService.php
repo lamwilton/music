@@ -591,6 +591,127 @@ class SpotifyService
     }
 
     /**
+     * Get user's top tracks
+     */
+    public function getTopTracks(string $timeRange = 'medium_term', int $limit = 20): array
+    {
+        if (! $this->accessToken) {
+            throw new \Exception('Not authenticated. Run "music login" first.');
+        }
+
+        $this->ensureValidToken();
+
+        $response = Http::withToken($this->accessToken)
+            ->get($this->baseUri.'me/top/tracks', [
+                'time_range' => $timeRange,
+                'limit' => $limit,
+            ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            $tracks = [];
+
+            foreach ($data['items'] ?? [] as $track) {
+                $tracks[] = [
+                    'uri' => $track['uri'],
+                    'name' => $track['name'],
+                    'artist' => $track['artists'][0]['name'] ?? 'Unknown',
+                    'album' => $track['album']['name'] ?? 'Unknown',
+                ];
+            }
+
+            return $tracks;
+        }
+
+        return [];
+    }
+
+    /**
+     * Get user's top artists
+     */
+    public function getTopArtists(string $timeRange = 'medium_term', int $limit = 20): array
+    {
+        if (! $this->accessToken) {
+            throw new \Exception('Not authenticated. Run "music login" first.');
+        }
+
+        $this->ensureValidToken();
+
+        $response = Http::withToken($this->accessToken)
+            ->get($this->baseUri.'me/top/artists', [
+                'time_range' => $timeRange,
+                'limit' => $limit,
+            ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            $artists = [];
+
+            foreach ($data['items'] ?? [] as $artist) {
+                $artists[] = [
+                    'name' => $artist['name'],
+                    'genres' => $artist['genres'] ?? [],
+                    'uri' => $artist['uri'],
+                ];
+            }
+
+            return $artists;
+        }
+
+        return [];
+    }
+
+    /**
+     * Get recently played tracks
+     */
+    public function getRecentlyPlayed(int $limit = 20): array
+    {
+        if (! $this->accessToken) {
+            throw new \Exception('Not authenticated. Run "music login" first.');
+        }
+
+        $this->ensureValidToken();
+
+        $response = Http::withToken($this->accessToken)
+            ->get($this->baseUri.'me/player/recently-played', [
+                'limit' => $limit,
+            ]);
+
+        if ($response->successful()) {
+            $data = $response->json();
+            $tracks = [];
+
+            foreach ($data['items'] ?? [] as $item) {
+                $track = $item['track'];
+                $tracks[] = [
+                    'uri' => $track['uri'],
+                    'name' => $track['name'],
+                    'artist' => $track['artists'][0]['name'] ?? 'Unknown',
+                    'album' => $track['album']['name'] ?? 'Unknown',
+                    'played_at' => $item['played_at'] ?? null,
+                ];
+            }
+
+            return $tracks;
+        }
+
+        return [];
+    }
+
+    /**
+     * Search by genre and mood keywords
+     */
+    public function searchByGenre(string $genre, string $mood = '', int $limit = 10): array
+    {
+        $query = "genre:{$genre}";
+        if ($mood) {
+            $query .= " {$mood}";
+        }
+
+        return $this->searchMultiple($query, 'track', $limit);
+    }
+
+    /**
      * Set shuffle state
      */
     public function setShuffle(bool $state): bool
@@ -648,17 +769,39 @@ class SpotifyService
             $data = $response->json();
             if (isset($data['item'])) {
                 return [
+                    'uri' => $data['item']['uri'] ?? null,
                     'name' => $data['item']['name'],
                     'artist' => $data['item']['artists'][0]['name'] ?? 'Unknown',
                     'album' => $data['item']['album']['name'] ?? 'Unknown',
                     'progress_ms' => $data['progress_ms'] ?? 0,
                     'duration_ms' => $data['item']['duration_ms'] ?? 0,
                     'is_playing' => $data['is_playing'] ?? false,
-                    'shuffle_state' => $data['shuffle_state'] ?? false,  // Include shuffle state
-                    'repeat_state' => $data['repeat_state'] ?? 'off',  // Include repeat state
-                    'device' => $data['device'] ?? null,  // Include device info
+                    'shuffle_state' => $data['shuffle_state'] ?? false,
+                    'repeat_state' => $data['repeat_state'] ?? 'off',
+                    'device' => $data['device'] ?? null,
                 ];
             }
+        }
+
+        return null;
+    }
+
+    /**
+     * Get current user's profile (includes username/id)
+     */
+    public function getUserProfile(): ?array
+    {
+        if (! $this->accessToken) {
+            throw new \Exception('Not authenticated. Run "music login" first.');
+        }
+
+        $this->ensureValidToken();
+
+        $response = Http::withToken($this->accessToken)
+            ->get($this->baseUri.'me');
+
+        if ($response->successful()) {
+            return $response->json();
         }
 
         return null;

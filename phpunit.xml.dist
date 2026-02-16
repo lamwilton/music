@@ -3,6 +3,8 @@
          xsi:noNamespaceSchemaLocation="./vendor/phpunit/phpunit/phpunit.xsd"
          bootstrap="vendor/autoload.php"
          colors="true"
+         coverage="true"
+         processUncoveredFiles="true"
 >
     <testsuites>
         <testsuite name="Feature">
@@ -17,4 +19,11 @@
             <directory>./app</directory>
         </include>
     </source>
+    <coverage>
+        <report>
+            <html outputDirectory="coverage"/>
+            <text outputFile="php://stdout"/>
+            <clover outputFile="coverage/clover.xml"/>
+        </report>
+    </coverage>
 </phpunit>

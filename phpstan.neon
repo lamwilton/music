@@ -1,0 +1,14 @@
+parameters:
+    paths:
+        - app/
+        - tests/
+
+    level: 5
+
+    phpVersion: 80200
+
+    ignoreErrors:
+        - '#Strict comparison#'
+
+    excludePaths:
+        - app/Commands/Concerns/*

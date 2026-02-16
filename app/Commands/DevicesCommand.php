@@ -12,7 +12,7 @@ class DevicesCommand extends Command
 {
     use RequiresSpotifyConfig;
 
-    protected $signature = 'devices {--switch : Switch to a different device}';
+    protected $signature = 'devices {--switch : Switch to a different device} {--json : Output as JSON}';
 
     protected $description = 'List or switch Spotify devices';
 
@@ -30,6 +30,12 @@ class DevicesCommand extends Command
             if (empty($devices)) {
                 $this->warn('📱 No devices found');
                 $this->info('💡 Open Spotify on your phone, computer, or smart speaker');
+
+                return self::SUCCESS;
+            }
+
+            if ($this->option('json')) {
+                $this->line(json_encode($devices));
 
                 return self::SUCCESS;
             }

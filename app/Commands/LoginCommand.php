@@ -71,6 +71,8 @@ class LoginCommand extends Command
             'streaming',
             'playlist-read-private',
             'playlist-read-collaborative',
+            'user-top-read',
+            'user-read-recently-played',
         ];
 
         // Store scopes for event emission

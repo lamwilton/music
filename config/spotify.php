@@ -30,6 +30,8 @@ return [
         'streaming',
         'playlist-read-private',
         'playlist-read-collaborative',
+        'user-top-read',
+        'user-read-recently-played',
     ],
 
     /*
