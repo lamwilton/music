@@ -1,137 +1,45 @@
-# Music CLI - Spotify Controller
+# Spotify CLI
 
-A beautiful command-line interface for controlling Spotify, built with Laravel Zero.
+A full-featured Spotify CLI built on Laravel Zero. 30+ commands for playback control, queue management, discovery, and more — all from your terminal.
 
-## Features
-
-- **OAuth 2.0 Authentication** - Secure authentication with automatic token refresh
-- **Playback Control** - Play, pause, resume, skip, and control volume
-- **Device Management** - List and switch between Spotify devices
-- **Search & Play** - Search for tracks, artists, albums, and playlists
-- **Queue Management** - Add tracks to your queue
-- **Interactive Player** - Full-featured interactive player mode
-- **JSON Output** - Machine-readable output for scripting
-
-## Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/your-user/music.git
-cd music
-
-# Install dependencies
-composer install
-
-# Set up Spotify credentials
-./music setup
-```
+**[Docs](https://the-shit.github.io/music/)** · **[Commands](https://the-shit.github.io/music/commands.html)** · **[Vibes](https://the-shit.github.io/music/vibes.html)**
 
 ## Quick Start
 
 ```bash
-# First-time setup (opens Spotify Developer Dashboard)
-./music setup
+composer global require the-shit/music
 
-# Authenticate with Spotify
-./music login
-
-# Play a song
-./music play "Never Gonna Give You Up"
-
-# See what's playing
-./music current
-
-# Control playback
-./music pause
-./music resume
-./music skip
-./music skip prev
+spotify setup      # Configure Spotify API credentials
+spotify login      # Authenticate via OAuth
+spotify play "Killing In the Name"
+spotify current    # See what's playing
+spotify player     # Launch interactive TUI player
 ```
 
-## Commands
+## Highlights
 
-### Setup & Authentication
+- **Playback** — play, pause, skip, volume, shuffle, repeat
+- **Queue** — add tracks, view upcoming, auto-fill from recommendations
+- **Discovery** — search, mood queues (chill / flow / hype), top tracks
+- **Interactive Player** — TUI with progress bar and keyboard controls
+- **Daemon** — background playback via spotifyd, macOS media key integration
+- **Integrations** — Slack sharing, webhooks, event streaming
 
-| Command | Description |
-|---------|-------------|
-| `music setup` | Set up Spotify API credentials with guided wizard |
-| `music setup --reset` | Reset stored credentials |
-| `music login` | Authenticate with Spotify via OAuth |
+See the full [command reference](https://the-shit.github.io/music/commands.html) for all 32 commands.
 
-### Playback Control
+## Vibe Check
 
-| Command | Description |
-|---------|-------------|
-| `music play "query"` | Search and play a track |
-| `music play "query" --queue` | Add to queue instead of playing |
-| `music pause` | Pause playback |
-| `music resume` | Resume playback |
-| `music skip` | Skip to next track |
-| `music skip prev` | Skip to previous track |
-| `music volume` | Show current volume |
-| `music volume 50` | Set volume to 50% |
-| `music volume +10` | Increase volume by 10% |
-| `music shuffle` | Toggle shuffle |
-| `music shuffle on` | Enable shuffle |
-| `music repeat` | Cycle repeat mode |
-| `music repeat track` | Repeat current track |
+Every commit must include the Spotify track playing when the code was written. A pre-commit hook injects the track URL, and CI rejects any push without one.
 
-### Information & Queue
-
-| Command | Description |
-|---------|-------------|
-| `music current` | Show currently playing track |
-| `music devices` | List available devices |
-| `music devices --switch` | Interactive device switching |
-| `music queue "query"` | Add a track to the queue |
-| `music player` | Launch interactive player |
-
-### JSON Output
-
-All playback commands support `--json` for machine-readable output:
-
-```bash
-./music current --json
-./music play "song" --json
-./music volume --json
-```
-
-## Environment Variables
-
-```bash
-SPOTIFY_CLIENT_ID=your_client_id
-SPOTIFY_CLIENT_SECRET=your_client_secret
-SPOTIFY_REDIRECT_URI=http://127.0.0.1:8888/callback
-```
-
-## Configuration
-
-Credentials are stored in `.env` and tokens are stored securely in `storage/spotify_token.json` with restricted permissions (0600).
-
-### Required Spotify Scopes
-
-- `user-read-playback-state`
-- `user-modify-playback-state`
-- `user-read-currently-playing`
-- `streaming`
-- `playlist-read-private`
-- `playlist-read-collaborative`
+The result is the [vibes page](https://the-shit.github.io/music/vibes.html) — a living soundtrack of the entire codebase.
 
 ## Requirements
 
 - PHP 8.2+
 - Composer
-- A Spotify Premium account
-- A Spotify Developer application
-
-## Creating a Spotify App
-
-1. Go to [Spotify Developer Dashboard](https://developer.spotify.com/dashboard)
-2. Create a new application
-3. Add `http://127.0.0.1:8888/callback` as a redirect URI
-4. Copy your Client ID and Client Secret
-5. Run `./music setup` to configure
+- Spotify Premium account
+- A [Spotify Developer](https://developer.spotify.com/dashboard) application
 
 ## License
 
-MIT License
+MIT
