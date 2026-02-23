@@ -152,7 +152,7 @@ class VibesCommand extends Command
 
         usort($groups, fn ($a, $b) => count($b['commits']) <=> count($a['commits']));
 
-        return array_values($groups);
+        return $groups;
     }
 
     private function syncPlaylist(SpotifyService $spotify, array $groups): ?string

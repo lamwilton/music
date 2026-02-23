@@ -68,6 +68,21 @@ class QueueFillCommand extends Command
             // Let Spotify's algorithm pick the tracks
             $recommendations = $spotify->getRecommendations($seedTrackIds, $seedArtistIds, $needed + 5);
 
+            if (empty($recommendations)) {
+                if ($this->option('json')) {
+                    $this->line(json_encode([
+                        'filled' => false,
+                        'queue_length' => $queueLength,
+                        'target' => $target,
+                        'message' => 'No recommendations available — try playing a track first',
+                    ]));
+                } else {
+                    $this->warn('No recommendations available — try playing a track first');
+                }
+
+                return self::SUCCESS;
+            }
+
             $queued = [];
             foreach ($recommendations as $track) {
                 if (count($queued) >= $needed) {

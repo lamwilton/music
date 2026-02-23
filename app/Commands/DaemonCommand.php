@@ -57,8 +57,21 @@ class DaemonCommand extends Command
             return self::SUCCESS;
         }
 
-        // Check if spotifyd is installed
-        $spotifyd = trim(shell_exec('which spotifyd 2>/dev/null'));
+        // Detect orphaned spotifyd processes using our config
+        $configFile = $this->configDir.'/spotifyd.conf';
+        $orphanPid = trim((string) shell_exec("pgrep -f 'spotifyd.*{$configFile}' 2>/dev/null"));
+        if ($orphanPid) {
+            warning("Found orphaned spotifyd (PID: {$orphanPid}) — adopting it");
+            $this->savePid((int) $orphanPid);
+            info('✅ Daemon adopted');
+            info('📱 Run: spotify devices');
+
+            return self::SUCCESS;
+        }
+
+        // Prefer rodio build over portaudio (better audio buffering)
+        $rodioPath = $_SERVER['HOME'].'/.local/bin/spotifyd-rodio';
+        $spotifyd = file_exists($rodioPath) ? $rodioPath : trim(shell_exec('which spotifyd 2>/dev/null'));
         if (! $spotifyd) {
             error('spotifyd not found');
             $this->newLine();
@@ -110,11 +123,15 @@ class DaemonCommand extends Command
             mkdir($configDir, 0755, true);
         }
 
-        $deviceName = $this->option('name') ?: gethostname() ?: 'Spotify CLI';
+        $deviceName = $this->option('name') ?: 'Work Mac';
+
+        // Detect backend from binary capabilities
+        $helpOutput = (string) shell_exec("{$daemonPath} --help 2>&1");
+        $backend = str_contains($helpOutput, 'rodio') ? 'rodio' : 'portaudio';
 
         // Configuration — uses OAuth via cache_path, no username needed
         $config = "[global]\n".
-                  "backend = \"portaudio\"\n".
+                  "backend = \"{$backend}\"\n".
                   "device_name = \"{$deviceName}\"\n".
                   "bitrate = 320\n".
                   "volume_normalisation = true\n".
@@ -194,11 +211,29 @@ class DaemonCommand extends Command
 
         $pid = (int) file_get_contents($this->pidFile);
 
-        return $pid > 0 && posix_kill($pid, 0);
+        if ($pid <= 0 || ! posix_kill($pid, 0)) {
+            @unlink($this->pidFile);
+
+            return false;
+        }
+
+        // Verify the PID is actually spotifyd, not a recycled process
+        $comm = trim((string) shell_exec("ps -p {$pid} -o comm= 2>/dev/null"));
+        if ($comm !== 'spotifyd') {
+            @unlink($this->pidFile);
+
+            return false;
+        }
+
+        return true;
     }
 
     private function savePid(int $pid): void
     {
+        if (! is_dir($this->configDir)) {
+            mkdir($this->configDir, 0755, true);
+        }
+
         file_put_contents($this->pidFile, $pid);
         chmod($this->pidFile, 0600);
     }

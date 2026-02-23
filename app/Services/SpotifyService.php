@@ -74,29 +74,42 @@ class SpotifyService
      */
     private function refreshAccessToken(): void
     {
-        $response = Http::withHeaders([
-            'Authorization' => 'Basic '.base64_encode($this->clientId.':'.$this->clientSecret),
-        ])->asForm()->post('https://accounts.spotify.com/api/token', [
-            'grant_type' => 'refresh_token',
-            'refresh_token' => $this->refreshToken,
-        ]);
+        // Retry refresh up to 3 times — transient failures shouldn't nuke the session
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            $response = Http::withHeaders([
+                'Authorization' => 'Basic '.base64_encode($this->clientId.':'.$this->clientSecret),
+            ])->asForm()->post('https://accounts.spotify.com/api/token', [
+                'grant_type' => 'refresh_token',
+                'refresh_token' => $this->refreshToken,
+            ]);
 
-        if ($response->successful()) {
-            $data = $response->json();
-            $this->accessToken = $data['access_token'];
-            $this->expiresAt = time() + ($data['expires_in'] ?? 3600);
+            if ($response->successful()) {
+                $data = $response->json();
+                $this->accessToken = $data['access_token'];
+                $this->expiresAt = time() + ($data['expires_in'] ?? 3600);
 
-            // Spotify may rotate refresh tokens — always capture the new one
-            if (! empty($data['refresh_token'])) {
-                $this->refreshToken = $data['refresh_token'];
+                // Spotify may rotate refresh tokens — always capture the new one
+                if (! empty($data['refresh_token'])) {
+                    $this->refreshToken = $data['refresh_token'];
+                }
+
+                // Save updated token data
+                $this->saveTokenData();
+
+                return;
             }
 
-            // Save updated token data
-            $this->saveTokenData();
-        } else {
-            // Refresh failed — token is likely revoked, clear it so callers know
-            $this->accessToken = null;
-            $this->expiresAt = null;
+            // Only clear token on 4xx (truly revoked), not on network/5xx errors
+            if ($response->status() >= 400 && $response->status() < 500) {
+                $this->accessToken = null;
+                $this->expiresAt = null;
+
+                return;
+            }
+
+            if ($attempt < 3) {
+                usleep(500000 * $attempt);
+            }
         }
     }
 
@@ -691,6 +704,23 @@ class SpotifyService
 
         $this->ensureValidToken();
 
+        // Spotify requires at least one seed — fall back to recent tracks
+        if (empty($seedTrackIds) && empty($seedArtistIds)) {
+            $recent = $this->getRecentlyPlayed(5);
+            foreach ($recent as $track) {
+                if (preg_match('/spotify:track:(.+)/', $track['uri'], $m)) {
+                    $seedTrackIds[] = $m[1];
+                }
+                if (count($seedTrackIds) >= 3) {
+                    break;
+                }
+            }
+
+            if (empty($seedTrackIds)) {
+                return [];
+            }
+        }
+
         $params = ['limit' => $limit];
 
         if (! empty($seedTrackIds)) {
@@ -781,11 +811,15 @@ class SpotifyService
         if ($response->successful()) {
             $data = $response->json();
             if (isset($data['item'])) {
+                $albumImages = $data['item']['album']['images'] ?? [];
+
                 return [
                     'uri' => $data['item']['uri'] ?? null,
                     'name' => $data['item']['name'],
+                    'track' => $data['item']['name'],
                     'artist' => $data['item']['artists'][0]['name'] ?? 'Unknown',
                     'album' => $data['item']['album']['name'] ?? 'Unknown',
+                    'album_art_url' => $albumImages[0]['url'] ?? null,
                     'progress_ms' => $data['progress_ms'] ?? 0,
                     'duration_ms' => $data['item']['duration_ms'] ?? 0,
                     'is_playing' => $data['is_playing'] ?? false,
