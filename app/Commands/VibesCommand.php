@@ -472,6 +472,80 @@ class VibesCommand extends Command
             margin-top: 2px;
         }
 
+        .manifesto {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 48px;
+        }
+
+        .manifesto h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: #fff;
+        }
+
+        .manifesto p {
+            color: var(--text-dim);
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 14px;
+        }
+
+        .manifesto strong { color: var(--text); }
+        .manifesto em { color: var(--green); font-style: normal; }
+        .manifesto a { color: var(--green); text-decoration: none; }
+        .manifesto a:hover { text-decoration: underline; }
+
+        .manifesto-features {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin: 24px 0;
+        }
+
+        .feature {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 14px;
+            background: rgba(29, 185, 84, 0.04);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+        }
+
+        .feature-icon { font-size: 1.3rem; flex-shrink: 0; }
+
+        .feature-text {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+            line-height: 1.5;
+        }
+
+        .feature-text strong { color: var(--text); }
+
+        .manifesto-cta {
+            margin-top: 20px;
+            font-size: 1.05rem;
+            color: var(--text) !important;
+        }
+
+        .section-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 24px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        @media (max-width: 600px) {
+            .manifesto { padding: 24px; }
+            .manifesto-features { grid-template-columns: 1fr; }
+        }
+
         .footer {
             text-align: center;
             padding: 40px 20px;
@@ -499,7 +573,7 @@ class VibesCommand extends Command
 <body>
     <div class="hero">
         <h1>every commit has a <span>vibe</span></h1>
-        <p class="subtitle">This project requires every commit to include the Spotify track playing when the code was written. Here's the soundtrack.</p>
+        <p class="subtitle">A Spotify CLI where CI rejects your code if you weren't listening to music when you wrote it.</p>
         <div class="stats">
             <div class="stat">
                 <div class="stat-value">{$totalCommits}</div>
@@ -514,6 +588,35 @@ class VibesCommand extends Command
     </div>
 
     <div class="container">
+        <div class="manifesto">
+            <h2>What is this?</h2>
+            <p>This is a <strong>Spotify CLI</strong> built on Laravel Zero. It controls your music from the terminal &mdash; play, pause, skip, queue, discover, the whole thing.</p>
+            <p>But here's the thing: <strong>every commit must include the Spotify track you were listening to when you wrote the code.</strong></p>
+            <p>A git hook auto-injects the currently playing song into your commit message. CI runs a <em>vibe check</em> on every push. No track URL? <strong>Rejected.</strong> No exceptions. Merge commits get a pass because even we aren't that unhinged.</p>
+            <p>The result is this page &mdash; a living soundtrack of the entire codebase, auto-generated after every commit. You're looking at every song that was playing when every line of code was written.</p>
+            <div class="manifesto-features">
+                <div class="feature">
+                    <div class="feature-icon">&#x1F3B5;</div>
+                    <div class="feature-text"><strong>Pre-commit hook</strong> reads Spotify API, injects track into commit message</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">&#x1F6A8;</div>
+                    <div class="feature-text"><strong>Vibe Check CI</strong> scans every commit for a Spotify URL. No music, no merge.</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">&#x1F4BB;</div>
+                    <div class="feature-text"><strong>DJ Hook</strong> blocks your AI coding assistant from running commands if Spotify isn't playing</div>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">&#x267B;&#xFE0F;</div>
+                    <div class="feature-text"><strong>This page</strong> regenerates automatically on every push to master</div>
+                </div>
+            </div>
+            <p class="manifesto-cta">Clone it. <a href="https://github.com/the-shit/music">the-shit/music</a></p>
+        </div>
+
+        <h2 class="section-title">The Soundtrack</h2>
+
         {$trackCards}
     </div>
 
