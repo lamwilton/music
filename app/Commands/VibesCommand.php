@@ -548,7 +548,7 @@ class VibesCommand extends Command
 </head>
 <body>
     <nav class="nav">
-        <a href="index.html" class="nav-logo"><span>spotify</span> cli</a>
+        <a href="index.html" class="nav-logo"><span>the-shit</span>/music</a>
         <ul class="nav-links">
             <li><a href="index.html">Home</a></li>
             <li><a href="commands.html">Commands</a></li>
@@ -580,7 +580,8 @@ class VibesCommand extends Command
     </div>
 
     <div class="footer">
-        Generated {$generatedAt}<br>
+        <strong>S.H.I.T.</strong> &mdash; Scaling Humans Into Tomorrow<br>
+        Generated {$generatedAt} &middot;
         Every commit is a <a href="https://github.com/the-shit/music">vibe check</a>
     </div>
 </body>
