@@ -3,832 +3,105 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibes — Commit Soundtrack</title>
-    <meta name="description" content="Every commit has a vibe. 20 commits, 12 tracks.">
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        :root {
-            --bg: #0a0a0a;
-            --surface: #141414;
-            --surface-hover: #1a1a1a;
-            --border: #282828;
-            --text: #e1e1e1;
-            --text-dim: #6a6a6a;
-            --text-muted: #404040;
-            --green: #1DB954;
-            --green-dim: #1a7a3a;
-            --commit-type-feat: #1DB954;
-            --commit-type-fix: #e74c3c;
-            --commit-type-test: #9b59b6;
-            --commit-type-ci: #3498db;
-            --commit-type-refactor: #f39c12;
-            --commit-type-docs: #1abc9c;
-        }
-
-        body {
-            background: var(--bg);
-            color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            line-height: 1.6;
-            min-height: 100vh;
-        }
-
-        .hero {
-            text-align: center;
-            padding: 80px 20px 60px;
-            background: linear-gradient(180deg, #1DB95415 0%, transparent 100%);
-            position: relative;
-        }
-
-        .hero h1 {
-            font-size: 3.5rem;
-            font-weight: 800;
-            letter-spacing: -0.03em;
-            margin-bottom: 12px;
-        }
-
-        .hero h1 span { color: var(--green); }
-
-        .hero .subtitle {
-            color: var(--text-dim);
-            font-size: 1.15rem;
-            max-width: 520px;
-            margin: 0 auto 24px;
-        }
-
-        .stats {
-            display: flex;
-            gap: 32px;
-            justify-content: center;
-            margin-top: 24px;
-        }
-
-        .stat {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--green);
-        }
-
-        .stat-label {
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-        }
-
-        .playlist-link {
-            display: inline-block;
-            margin-top: 28px;
-            padding: 12px 28px;
-            background: var(--green);
-            color: #000;
-            font-weight: 700;
-            font-size: 0.95rem;
-            border-radius: 50px;
-            text-decoration: none;
-            transition: transform 0.15s, background 0.15s;
-        }
-
-        .playlist-link:hover {
-            transform: scale(1.05);
-            background: #1ed760;
-        }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 20px 80px;
-        }
-
-        .track-card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            margin-bottom: 32px;
-            overflow: hidden;
-            transition: border-color 0.2s;
-            position: relative;
-        }
-
-        .track-card:hover {
-            border-color: var(--green-dim);
-        }
-
-        .track-hero {
-            position: relative;
-            padding: 24px;
-            display: flex;
-            gap: 20px;
-            align-items: center;
-            overflow: hidden;
-        }
-
-        .track-hero-bg {
-            position: absolute;
-            inset: 0;
-            background-size: cover;
-            background-position: center;
-            filter: blur(40px) brightness(0.3);
-            transform: scale(1.5);
-        }
-
-        .track-art {
-            width: 80px;
-            height: 80px;
-            border-radius: 8px;
-            object-fit: cover;
-            position: relative;
-            z-index: 1;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-
-        .track-info {
-            position: relative;
-            z-index: 1;
-            flex: 1;
-            min-width: 0;
-        }
-
-        .track-name {
-            font-size: 1.15rem;
-            font-weight: 700;
-            color: #fff;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .track-artist {
-            font-size: 0.9rem;
-            color: rgba(255,255,255,0.7);
-        }
-
-        .track-album {
-            font-size: 0.8rem;
-            color: rgba(255,255,255,0.4);
-            margin-top: 2px;
-        }
-
-        .track-badge {
-            position: relative;
-            z-index: 1;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            color: var(--green);
-            white-space: nowrap;
-        }
-
-        .spotify-embed {
-            padding: 0 24px;
-            margin: 0 0 8px;
-        }
-
-        .spotify-embed iframe {
-            border-radius: 12px;
-        }
-
-        .commits {
-            padding: 0 24px 24px;
-        }
-
-        .commit {
-            display: flex;
-            gap: 12px;
-            padding: 12px 0;
-            border-top: 1px solid var(--border);
-            align-items: flex-start;
-        }
-
-        .commit:first-child {
-            border-top: none;
-        }
-
-        .commit-hash {
-            font-family: 'SF Mono', 'Fira Code', monospace;
-            font-size: 0.8rem;
-            color: var(--green);
-            background: rgba(29, 185, 84, 0.08);
-            padding: 2px 8px;
-            border-radius: 4px;
-            flex-shrink: 0;
-            text-decoration: none;
-        }
-
-        .commit-hash:hover {
-            background: rgba(29, 185, 84, 0.15);
-        }
-
-        .commit-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .commit-subject {
-            font-size: 0.9rem;
-            color: var(--text);
-            word-break: break-word;
-        }
-
-        .commit-type {
-            display: inline-block;
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            padding: 1px 6px;
-            border-radius: 3px;
-            margin-right: 4px;
-        }
-
-        .type-feat { background: rgba(29, 185, 84, 0.15); color: var(--commit-type-feat); }
-        .type-fix { background: rgba(231, 76, 60, 0.15); color: var(--commit-type-fix); }
-        .type-test { background: rgba(155, 89, 182, 0.15); color: var(--commit-type-test); }
-        .type-ci { background: rgba(52, 152, 219, 0.15); color: var(--commit-type-ci); }
-        .type-refactor { background: rgba(243, 156, 18, 0.15); color: var(--commit-type-refactor); }
-        .type-docs { background: rgba(26, 188, 156, 0.15); color: var(--commit-type-docs); }
-
-        .commit-meta {
-            font-size: 0.75rem;
-            color: var(--text-dim);
-            margin-top: 2px;
-        }
-
-        .manifesto {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 16px;
-            padding: 40px;
-            margin-bottom: 48px;
-        }
-
-        .manifesto h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-            color: #fff;
-        }
-
-        .manifesto p {
-            color: var(--text-dim);
-            font-size: 1rem;
-            line-height: 1.7;
-            margin-bottom: 14px;
-        }
-
-        .manifesto strong { color: var(--text); }
-        .manifesto em { color: var(--green); font-style: normal; }
-        .manifesto a { color: var(--green); text-decoration: none; }
-        .manifesto a:hover { text-decoration: underline; }
-
-        .manifesto-features {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin: 24px 0;
-        }
-
-        .feature {
-            display: flex;
-            gap: 12px;
-            align-items: flex-start;
-            padding: 14px;
-            background: rgba(29, 185, 84, 0.04);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-        }
-
-        .feature-icon { font-size: 1.3rem; flex-shrink: 0; }
-
-        .feature-text {
-            font-size: 0.85rem;
-            color: var(--text-dim);
-            line-height: 1.5;
-        }
-
-        .feature-text strong { color: var(--text); }
-
-        .manifesto-cta {
-            margin-top: 20px;
-            font-size: 1.05rem;
-            color: var(--text) !important;
-        }
-
-        .section-title {
-            font-size: 1.3rem;
-            font-weight: 700;
-            color: #fff;
-            margin-bottom: 24px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--border);
-        }
-
-        @media (max-width: 600px) {
-            .manifesto { padding: 24px; }
-            .manifesto-features { grid-template-columns: 1fr; }
-        }
-
-        .footer {
-            text-align: center;
-            padding: 40px 20px;
-            color: var(--text-muted);
-            font-size: 0.8rem;
-            border-top: 1px solid var(--border);
-        }
-
-        .footer a {
-            color: var(--green);
-            text-decoration: none;
-        }
-
-        @media (max-width: 600px) {
-            .hero h1 { font-size: 2.2rem; }
-            .stats { gap: 20px; }
-            .stat-value { font-size: 1.5rem; }
-            .track-hero { padding: 16px; }
-            .track-art { width: 60px; height: 60px; }
-            .spotify-embed, .commits { padding-left: 16px; padding-right: 16px; }
-            .track-badge { display: none; }
-        }
-    </style>
+    <title>the-shit/music — Spotify from your terminal</title>
+    <meta name="description" content="A Spotify CLI built on Laravel Zero. Play, pause, queue, discover — and every commit must include the song you were listening to.">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <nav class="nav">
+        <a href="index.html" class="nav-logo"><span>spotify</span> cli</a>
+        <ul class="nav-links">
+            <li><a href="index.html" class="active">Home</a></li>
+            <li><a href="commands.html">Commands</a></li>
+            <li><a href="vibes.html">Vibes</a></li>
+            <li><a href="https://github.com/the-shit/music">GitHub</a></li>
+        </ul>
+    </nav>
+
     <div class="hero">
-        <h1>every commit has a <span>vibe</span></h1>
-        <p class="subtitle">A Spotify CLI where CI rejects your code if you weren't listening to music when you wrote it.</p>
-        <div class="stats">
-            <div class="stat">
-                <div class="stat-value">20</div>
-                <div class="stat-label">Commits</div>
-            </div>
-            <div class="stat">
-                <div class="stat-value">12</div>
-                <div class="stat-label">Tracks</div>
-            </div>
-        </div>
-        
+        <h1>Spotify from your <span>terminal</span></h1>
+        <p class="subtitle">A full-featured Spotify CLI with 30+ commands. Play music, manage queues, discover tracks — and CI rejects your code if you weren't listening to music when you wrote it.</p>
     </div>
 
     <div class="container">
-        <div class="manifesto">
+        <div class="features">
+            <div class="feature-card">
+                <h3>Playback Control</h3>
+                <p>Play, pause, skip, volume, shuffle, repeat. Full control over Spotify without leaving the terminal.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Discovery</h3>
+                <p>AI-friendly search, mood queues (chill, flow, hype), and recommendations powered by your listening history.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Queue Management</h3>
+                <p>Add tracks, view upcoming songs, and auto-fill your queue using Spotify's recommendation engine.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Interactive Player</h3>
+                <p>A visual TUI player with progress bar, album art, and keyboard controls. Like Spotify, but in your terminal.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Daemon Mode</h3>
+                <p>Background playback with spotifyd, macOS media key integration, and Control Center sync via nowplaying.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Vibe Check CI</h3>
+                <p>Every commit must include the song you were listening to. CI enforces it. No music, no merge.</p>
+            </div>
+        </div>
+
+        <div class="code-block">
+            <pre><span class="comment"># Install globally</span>
+<span class="cmd">composer global require the-shit/music</span>
+
+<span class="comment"># Set up Spotify credentials</span>
+<span class="cmd">spotify setup</span>
+
+<span class="comment"># Authenticate</span>
+<span class="cmd">spotify login</span>
+
+<span class="comment"># Play something</span>
+<span class="cmd">spotify play "Killing In the Name"</span>
+
+<span class="comment"># See what's playing</span>
+<span class="cmd">spotify current</span>
+
+<span class="comment"># Launch interactive player</span>
+<span class="cmd">spotify player</span></pre>
+        </div>
+
+        <div class="section">
             <h2>What is this?</h2>
-            <p>This is a <strong>Spotify CLI</strong> built on Laravel Zero. It controls your music from the terminal &mdash; play, pause, skip, queue, discover, the whole thing.</p>
+            <p>This is <strong><a href="https://github.com/the-shit/music">the-shit/music</a></strong> — a Spotify CLI built on Laravel Zero. It controls your music from the terminal &mdash; play, pause, skip, queue, discover, the whole thing.</p>
             <p>But here's the thing: <strong>every commit must include the Spotify track you were listening to when you wrote the code.</strong></p>
             <p>A git hook auto-injects the currently playing song into your commit message. CI runs a <em>vibe check</em> on every push. No track URL? <strong>Rejected.</strong> No exceptions. Merge commits get a pass because even we aren't that unhinged.</p>
-            <p>The result is this page &mdash; a living soundtrack of the entire codebase, auto-generated after every commit. You're looking at every song that was playing when every line of code was written.</p>
+            <p>The result is the <a href="vibes.html">vibes page</a> &mdash; a living soundtrack of the entire codebase, auto-generated after every commit. You're looking at every song that was playing when every line of code was written.</p>
             <div class="manifesto-features">
-                <div class="feature">
-                    <div class="feature-icon">&#x1F3B5;</div>
-                    <div class="feature-text"><strong>Pre-commit hook</strong> reads Spotify API, injects track into commit message</div>
+                <div class="mf-item">
+                    <div class="mf-icon">&#x1F3B5;</div>
+                    <div class="mf-text"><strong>Pre-commit hook</strong> reads Spotify API, injects track into commit message</div>
                 </div>
-                <div class="feature">
-                    <div class="feature-icon">&#x1F6A8;</div>
-                    <div class="feature-text"><strong>Vibe Check CI</strong> scans every commit for a Spotify URL. No music, no merge.</div>
+                <div class="mf-item">
+                    <div class="mf-icon">&#x1F6A8;</div>
+                    <div class="mf-text"><strong>Vibe Check CI</strong> scans every commit for a Spotify URL. No music, no merge.</div>
                 </div>
-                <div class="feature">
-                    <div class="feature-icon">&#x1F4BB;</div>
-                    <div class="feature-text"><strong>DJ Hook</strong> blocks your AI coding assistant from running commands if Spotify isn't playing</div>
+                <div class="mf-item">
+                    <div class="mf-icon">&#x1F4BB;</div>
+                    <div class="mf-text"><strong>DJ Hook</strong> blocks your AI coding assistant from running commands if Spotify isn't playing</div>
                 </div>
-                <div class="feature">
-                    <div class="feature-icon">&#x267B;&#xFE0F;</div>
-                    <div class="feature-text"><strong>This page</strong> regenerates automatically on every push to master</div>
-                </div>
-            </div>
-            <p class="manifesto-cta">Clone it. <a href="https://github.com/the-shit/music">the-shit/music</a></p>
-        </div>
-
-        <h2 class="section-title">The Soundtrack</h2>
-
-        
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">3 commits</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/4cpOvpvvx1upv0HDyZKVQJ?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">2dc5097</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-fix">fix</span>fix: media bridge refreshes controls on skip/previous/seek</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-                <div class="commit">
-                    <code class="commit-hash">c5acabd</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-feat">feat</span>feat: add queue:show command to display upcoming tracks</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-                <div class="commit">
-                    <code class="commit-hash">525782c</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-docs">docs</span>docs: regenerate vibes page — 5 tracks, 8 commits</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">2 commits</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/6AioOohg4bQZFA4jIYQQ2r?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">cbd5049</code>
-                    <div class="commit-info">
-                        <div class="commit-subject">Add webhook support for event forwarding (#25)</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-                <div class="commit">
-                    <code class="commit-hash">96704f2</code>
-                    <div class="commit-info">
-                        <div class="commit-subject">Add webhook support for event forwarding</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">2 commits</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/2yYX7KbfWZrezWVW1vN3iz?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">7bd544c</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-docs">docs</span>docs: update vibes page [skip ci]</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-                <div class="commit">
-                    <code class="commit-hash">3a55298</code>
-                    <div class="commit-info">
-                        <div class="commit-subject">Remove agent commands and add --name option test</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">2 commits</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/2vPZ4Lklyu75zBR3SgbFNI?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">1b3cb77</code>
-                    <div class="commit-info">
-                        <div class="commit-subject">Fix Packagist identity and daemon OAuth (#24)</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-                <div class="commit">
-                    <code class="commit-hash">4eebac3</code>
-                    <div class="commit-info">
-                        <div class="commit-subject">Claim our name on Packagist and fix daemon to actually work</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">2 commits</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/2WSWm0zlL3CJRACHS5KXbB?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">1955e59</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-feat">feat</span>feat: unhinged manifesto on vibes page — explains the whole premise</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-                <div class="commit">
-                    <code class="commit-hash">ac3a730</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-fix">fix</span>fix: vibes CI needs PHP 8.4 to match composer.lock</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">2 commits</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/1158ckiB5S4cpsdYHDB9IF?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">ea40f23</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-feat">feat</span>feat: vibes page — commits grouped by song with album art and Spotify embeds</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-                <div class="commit">
-                    <code class="commit-hash">16dca0a</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-feat">feat</span>feat: vibes page — commits grouped by song with album art and Spotify embeds</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">2 commits</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/6IxQ0PdozaZKch1m8tGCwb?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">bc70c46</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-refactor">refactor</span>refactor: unify config, fix PHPStan, remove legacy fallbacks (#22)</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-                <div class="commit">
-                    <code class="commit-hash">9f07631</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-feat">feat</span>feat: queue:fill command using Spotify recommendations API</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">1 commit</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/1MQTmpYOZ6fcMQc56Hdo7T?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">4fea661</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-fix">fix</span>fix: daemon reliability, rodio backend, media bridge, and queue fixes</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">1 commit</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/3FUS56gKr9mVBmzvlnodlh?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">6390d34</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-docs">docs</span>docs: regenerate vibes page — 10 tracks, 16 commits</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">1 commit</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/1S7FNazOUQc21EaQyh5nJT?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">e255f2c</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-ci">ci</span>ci: auto-regenerate vibes page on push to master</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">1 commit</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/6wqBUUWSTn39vEXVM67avV?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">d6df3b4</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-refactor">refactor</span>refactor: unify config dir, fix PHPStan, remove legacy fallbacks</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="track-card">
-            <div class="track-hero">
-                
-                <div class="track-info">
-                    <div class="track-name">Unknown Track</div>
-                    <div class="track-artist">Unknown Artist</div>
-                    <div class="track-album"></div>
-                </div>
-                <div class="track-badge">1 commit</div>
-            </div>
-            <div class="spotify-embed">
-                <iframe
-                    src="https://open.spotify.com/embed/track/1jzIJcHCXneHw7ojC6LXiF?utm_source=generator&theme=0"
-                    width="100%" height="80"
-                    frameBorder="0"
-                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                    loading="lazy">
-                </iframe>
-            </div>
-            <div class="commits">
-                
-                <div class="commit">
-                    <code class="commit-hash">c585635</code>
-                    <div class="commit-info">
-                        <div class="commit-subject"><span class="commit-type type-test">test</span>test: push coverage from 47% to 52.8% — clears Sentinel Gate 50% threshold (#21)</div>
-                        <div class="commit-meta">Jordan Partridge · Feb 23, 2026</div>
-                    </div>
+                <div class="mf-item">
+                    <div class="mf-icon">&#x267B;&#xFE0F;</div>
+                    <div class="mf-text"><strong>Vibes page</strong> regenerates automatically on every push to master</div>
                 </div>
             </div>
         </div>
     </div>
 
     <div class="footer">
-        Generated February 23, 2026 at 10:46 PM<br>
-        Every commit is a <a href="https://github.com/the-shit/music">vibe check</a>
+        <a href="https://github.com/the-shit/music">the-shit/music</a> &middot;
+        <a href="commands.html">Commands</a> &middot;
+        <a href="vibes.html">Vibes</a>
     </div>
 </body>
 </html>
