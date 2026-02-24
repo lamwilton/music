@@ -6,8 +6,10 @@
             "type": "local",
             "enabled": true,
             "command": [
-                "node",
-                "/Users/jordanpartridge/.local/state/opencode/mcp/spotify-server.js"
+                "php",
+                "/Users/jordan/Code/music/spotify",
+                "mcp:start",
+                "spotify"
             ]
         }
     }

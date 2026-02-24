@@ -63,6 +63,11 @@ return [
         Illuminate\Console\Scheduling\ScheduleFinishCommand::class,
         Illuminate\Foundation\Console\VendorPublishCommand::class,
         LaravelZero\Framework\Commands\StubPublishCommand::class,
+        Laravel\Mcp\Console\Commands\MakeServerCommand::class,
+        Laravel\Mcp\Console\Commands\MakeToolCommand::class,
+        Laravel\Mcp\Console\Commands\MakePromptCommand::class,
+        Laravel\Mcp\Console\Commands\MakeResourceCommand::class,
+        Laravel\Mcp\Console\Commands\InspectorCommand::class,
     ],
 
     /*

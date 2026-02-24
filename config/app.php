@@ -5,6 +5,7 @@ return [
     'version' => 'v0.0.1',
     'env' => 'production',
     'providers' => [
-        0 => 'App\\Providers\\AppServiceProvider',
+        App\Providers\AppServiceProvider::class,
+        App\Providers\McpServiceProvider::class,
     ],
 ];

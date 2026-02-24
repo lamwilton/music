@@ -2,7 +2,7 @@
 
 A full-featured Spotify CLI built on Laravel Zero. 30+ commands for playback control, queue management, discovery, and more — all from your terminal.
 
-**[Docs](https://the-shit.github.io/music/)** · **[Commands](https://the-shit.github.io/music/commands.html)** · **[Vibes](https://the-shit.github.io/music/vibes.html)**
+**[Docs](https://the-shit.github.io/music/)** · **[Commands](https://the-shit.github.io/music/commands.html)** · **[MCP](https://the-shit.github.io/music/mcp.html)** · **[Vibes](https://the-shit.github.io/music/vibes.html)**
 
 ## Quick Start
 
@@ -26,6 +26,23 @@ spotify player     # Launch interactive TUI player
 - **Integrations** — Slack sharing, webhooks, event streaming
 
 See the full [command reference](https://the-shit.github.io/music/commands.html) for all 32 commands.
+
+## MCP Server
+
+This CLI doubles as an [MCP server](https://the-shit.github.io/music/mcp.html) — AI assistants like Claude can control your Spotify directly. 12 tools for playback, queue, search, and more.
+
+```json
+{
+  "mcpServers": {
+    "spotify": {
+      "command": "spotify",
+      "args": ["mcp:start", "spotify"]
+    }
+  }
+}
+```
+
+See the [MCP setup docs](https://the-shit.github.io/music/mcp.html) for Claude Desktop, Claude Code, and OpenCode configuration.
 
 ## Vibe Check
 

@@ -552,6 +552,7 @@ class VibesCommand extends Command
         <ul class="nav-links">
             <li><a href="index.html">Home</a></li>
             <li><a href="commands.html">Commands</a></li>
+            <li><a href="mcp.html">MCP</a></li>
             <li><a href="vibes.html" class="active">Vibes</a></li>
             <li><a href="https://github.com/the-shit/music">GitHub</a></li>
         </ul>
