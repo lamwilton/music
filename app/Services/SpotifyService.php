@@ -36,7 +36,8 @@ class SpotifyService
      */
     public function isConfigured(): bool
     {
-        return ! empty($this->clientId) && ! empty($this->clientSecret) && ! empty($this->accessToken);
+        return ! empty($this->clientId) && ! empty($this->clientSecret)
+            && (! empty($this->accessToken) || ! empty($this->refreshToken));
     }
 
     /**
@@ -55,17 +56,60 @@ class SpotifyService
     }
 
     /**
+     * Re-read credentials and token data fresh from disk, bypassing config cache.
+     * Picks up tokens saved by external processes (e.g. `spotify login`).
+     */
+    private function reloadFromDisk(): void
+    {
+        $configDir = dirname($this->tokenFile);
+        $credentialsFile = $configDir.'/credentials.json';
+
+        if (file_exists($credentialsFile)) {
+            $creds = json_decode(file_get_contents($credentialsFile), true);
+            if ($creds) {
+                $this->clientId = $creds['client_id'] ?? $this->clientId;
+                $this->clientSecret = $creds['client_secret'] ?? $this->clientSecret;
+            }
+        }
+
+        $this->loadTokenData();
+    }
+
+    /**
      * Check if token is expired and refresh if needed
      */
     private function ensureValidToken(): void
     {
         // If we have a refresh token and the access token is expired (or about to expire in 60 seconds)
         if ($this->refreshToken && (! $this->expiresAt || $this->expiresAt < (time() + 60))) {
-            $this->refreshAccessToken();
+            // Re-read from disk first — an external `spotify login` may have saved fresh tokens
+            $this->reloadFromDisk();
+
+            // After reload, check if we still need to refresh
+            if (! $this->expiresAt || $this->expiresAt < (time() + 60)) {
+                $this->refreshAccessToken();
+            }
 
             if (! $this->accessToken) {
                 throw new \Exception('Session expired. Run "spotify login" to re-authenticate.');
             }
+        }
+    }
+
+    /**
+     * Ensure we have a valid access token, throwing if not authenticated.
+     * Combines the null-check + refresh into one call.
+     */
+    private function requireAuth(): void
+    {
+        if (! $this->accessToken && ! $this->refreshToken) {
+            throw new \Exception('Not authenticated. Run "spotify login" first.');
+        }
+
+        $this->ensureValidToken();
+
+        if (! $this->accessToken) {
+            throw new \Exception('Not authenticated. Run "spotify login" first.');
         }
     }
 
@@ -103,6 +147,7 @@ class SpotifyService
             if ($response->status() >= 400 && $response->status() < 500) {
                 $this->accessToken = null;
                 $this->expiresAt = null;
+                $this->saveTokenData();
 
                 return;
             }
@@ -140,11 +185,7 @@ class SpotifyService
      */
     public function search(string $query, string $type = 'track'): ?array
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->get($this->baseUri.'search', [
@@ -174,11 +215,7 @@ class SpotifyService
      */
     public function play(string $uri, ?string $deviceId = null): void
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         // If no device specified, try to get active or first available
         if (! $deviceId) {
@@ -229,11 +266,7 @@ class SpotifyService
      */
     public function resume(?string $deviceId = null): void
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         // If no device specified, try to get active device
         if (! $deviceId) {
@@ -268,11 +301,7 @@ class SpotifyService
      */
     public function pause(): void
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->put($this->baseUri.'me/player/pause');
@@ -288,11 +317,7 @@ class SpotifyService
      */
     public function setVolume(int $volumePercent): bool
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         // Clamp volume to 0-100
         $volumePercent = max(0, min(100, $volumePercent));
@@ -308,11 +333,7 @@ class SpotifyService
      */
     public function next(): void
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->post($this->baseUri.'me/player/next');
@@ -328,11 +349,7 @@ class SpotifyService
      */
     public function previous(): void
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->post($this->baseUri.'me/player/previous');
@@ -348,11 +365,7 @@ class SpotifyService
      */
     public function getDevices(): array
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->get($this->baseUri.'me/player/devices');
@@ -371,11 +384,7 @@ class SpotifyService
      */
     public function transferPlayback(string $deviceId, bool $play = true): void
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->put($this->baseUri.'me/player', [
@@ -412,11 +421,7 @@ class SpotifyService
      */
     public function addToQueue(string $uri): void
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         // Get active device first
         $device = $this->getActiveDevice();
@@ -442,7 +447,7 @@ class SpotifyService
      */
     public function getPlaylists(int $limit = 20): array
     {
-        if (! $this->accessToken) {
+        if (! $this->accessToken && ! $this->refreshToken) {
             return [];
         }
 
@@ -467,7 +472,7 @@ class SpotifyService
      */
     public function getPlaylistTracks(string $playlistId): array
     {
-        if (! $this->accessToken) {
+        if (! $this->accessToken && ! $this->refreshToken) {
             return [];
         }
 
@@ -490,7 +495,7 @@ class SpotifyService
      */
     public function playPlaylist(string $playlistId, ?string $deviceId = null): bool
     {
-        if (! $this->accessToken) {
+        if (! $this->accessToken && ! $this->refreshToken) {
             return false;
         }
 
@@ -512,7 +517,7 @@ class SpotifyService
      */
     public function getQueue(): array
     {
-        if (! $this->accessToken) {
+        if (! $this->accessToken && ! $this->refreshToken) {
             return [];
         }
 
@@ -538,11 +543,7 @@ class SpotifyService
      */
     public function searchMultiple(string $query, string $type = 'track', int $limit = 10): array
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->get($this->baseUri.'search', [
@@ -577,11 +578,7 @@ class SpotifyService
      */
     public function getTopTracks(string $timeRange = 'medium_term', int $limit = 20): array
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->get($this->baseUri.'me/top/tracks', [
@@ -613,11 +610,7 @@ class SpotifyService
      */
     public function getTopArtists(string $timeRange = 'medium_term', int $limit = 20): array
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->get($this->baseUri.'me/top/artists', [
@@ -648,11 +641,7 @@ class SpotifyService
      */
     public function getRecentlyPlayed(int $limit = 20): array
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->get($this->baseUri.'me/player/recently-played', [
@@ -698,11 +687,7 @@ class SpotifyService
      */
     public function getRecommendations(array $seedTrackIds = [], array $seedArtistIds = [], int $limit = 10, array $audioFeatures = []): array
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         // Spotify requires at least one seed — fall back to recent tracks
         if (empty($seedTrackIds) && empty($seedArtistIds)) {
@@ -797,11 +782,7 @@ class SpotifyService
      */
     public function setShuffle(bool $state): bool
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->put($this->baseUri.'me/player/shuffle?state='.($state ? 'true' : 'false'));
@@ -814,11 +795,7 @@ class SpotifyService
      */
     public function setRepeat(string $state): bool
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         // State can be: off, track, context
         if (! in_array($state, ['off', 'track', 'context'])) {
@@ -836,7 +813,7 @@ class SpotifyService
      */
     public function getCurrentPlayback(): ?array
     {
-        if (! $this->accessToken) {
+        if (! $this->accessToken && ! $this->refreshToken) {
             return null;
         }
 
@@ -876,7 +853,7 @@ class SpotifyService
      */
     public function getTracks(array $trackIds): array
     {
-        if (! $this->accessToken || empty($trackIds)) {
+        if ((! $this->accessToken && ! $this->refreshToken) || empty($trackIds)) {
             return [];
         }
 
@@ -981,11 +958,7 @@ class SpotifyService
      */
     public function createPlaylist(string $name, string $description = '', bool $public = true): ?array
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $profile = $this->getUserProfile();
         if (! $profile) {
@@ -1011,11 +984,7 @@ class SpotifyService
      */
     public function replacePlaylistTracks(string $playlistId, array $trackUris): bool
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         // Spotify allows max 100 URIs per request
         $first = true;
@@ -1062,7 +1031,7 @@ class SpotifyService
      */
     public function updatePlaylistDetails(string $playlistId, array $details): bool
     {
-        if (! $this->accessToken) {
+        if (! $this->accessToken && ! $this->refreshToken) {
             return false;
         }
 
@@ -1079,11 +1048,7 @@ class SpotifyService
      */
     public function getUserProfile(): ?array
     {
-        if (! $this->accessToken) {
-            throw new \Exception('Not authenticated. Run "music login" first.');
-        }
-
-        $this->ensureValidToken();
+        $this->requireAuth();
 
         $response = Http::withToken($this->accessToken)
             ->get($this->baseUri.'me');
