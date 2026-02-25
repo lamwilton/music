@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools;
 
+use App\Mcp\Concerns\HandlesAuthErrors;
 use App\Services\SpotifyService;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -13,10 +14,14 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Pause Spotify playback')]
 class PauseTool extends Tool
 {
+    use HandlesAuthErrors;
+
     public function handle(Request $request, SpotifyService $spotify): Response
     {
-        $spotify->pause();
+        return $this->withAuthHandling(function () use ($spotify) {
+            $spotify->pause();
 
-        return Response::text('Playback paused.');
+            return Response::text('Playback paused.');
+        });
     }
 }

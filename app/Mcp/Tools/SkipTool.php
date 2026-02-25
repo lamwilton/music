@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools;
 
+use App\Mcp\Concerns\HandlesAuthErrors;
 use App\Services\SpotifyService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -14,6 +15,8 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Skip to the next or previous track')]
 class SkipTool extends Tool
 {
+    use HandlesAuthErrors;
+
     public function schema(JsonSchema $schema): array
     {
         return [
@@ -26,16 +29,18 @@ class SkipTool extends Tool
 
     public function handle(Request $request, SpotifyService $spotify): Response
     {
-        $direction = $request->get('direction', 'next');
+        return $this->withAuthHandling(function () use ($request, $spotify) {
+            $direction = $request->get('direction', 'next');
 
-        if ($direction === 'previous') {
-            $spotify->previous();
+            if ($direction === 'previous') {
+                $spotify->previous();
 
-            return Response::text('Skipped to previous track.');
-        }
+                return Response::text('Skipped to previous track.');
+            }
 
-        $spotify->next();
+            $spotify->next();
 
-        return Response::text('Skipped to next track.');
+            return Response::text('Skipped to next track.');
+        });
     }
 }

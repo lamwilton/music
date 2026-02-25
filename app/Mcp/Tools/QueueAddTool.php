@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools;
 
+use App\Mcp\Concerns\HandlesAuthErrors;
 use App\Services\SpotifyService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -14,6 +15,8 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Search for a track and add it to the Spotify queue')]
 class QueueAddTool extends Tool
 {
+    use HandlesAuthErrors;
+
     public function schema(JsonSchema $schema): array
     {
         return [
@@ -25,15 +28,17 @@ class QueueAddTool extends Tool
 
     public function handle(Request $request, SpotifyService $spotify): Response
     {
-        $query = $request->get('query');
-        $result = $spotify->search($query);
+        return $this->withAuthHandling(function () use ($request, $spotify) {
+            $query = $request->get('query');
+            $result = $spotify->search($query);
 
-        if (! $result) {
-            return Response::error("No results found for \"{$query}\".");
-        }
+            if (! $result) {
+                return Response::error("No results found for \"{$query}\".");
+            }
 
-        $spotify->addToQueue($result['uri']);
+            $spotify->addToQueue($result['uri']);
 
-        return Response::text("Added to queue: {$result['name']} by {$result['artist']}");
+            return Response::text("Added to queue: {$result['name']} by {$result['artist']}");
+        });
     }
 }

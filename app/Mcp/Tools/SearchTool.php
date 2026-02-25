@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools;
 
+use App\Mcp\Concerns\HandlesAuthErrors;
 use App\Services\SpotifyService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -18,6 +19,8 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[IsIdempotent]
 class SearchTool extends Tool
 {
+    use HandlesAuthErrors;
+
     public function schema(JsonSchema $schema): array
     {
         return [
@@ -36,30 +39,32 @@ class SearchTool extends Tool
 
     public function handle(Request $request, SpotifyService $spotify): Response
     {
-        $query = $request->get('query');
-        $type = $request->get('type', 'track');
-        $limit = min(20, max(1, (int) $request->get('limit', 5)));
+        return $this->withAuthHandling(function () use ($request, $spotify) {
+            $query = $request->get('query');
+            $type = $request->get('type', 'track');
+            $limit = min(20, max(1, (int) $request->get('limit', 5)));
 
-        $results = $spotify->searchMultiple($query, $type, $limit);
+            $results = $spotify->searchMultiple($query, $type, $limit);
 
-        if (empty($results)) {
-            return Response::text("No {$type}s found for \"{$query}\".");
-        }
-
-        $lines = ["Search results for \"{$query}\" ({$type}s):"];
-        foreach ($results as $i => $result) {
-            $artist = $result['artist'] ?? '';
-            $album = $result['album'] ?? '';
-            $line = ($i + 1).". {$result['name']}";
-            if ($artist) {
-                $line .= " by {$artist}";
+            if (empty($results)) {
+                return Response::text("No {$type}s found for \"{$query}\".");
             }
-            if ($album) {
-                $line .= " ({$album})";
-            }
-            $lines[] = $line;
-        }
 
-        return Response::text(implode("\n", $lines));
+            $lines = ["Search results for \"{$query}\" ({$type}s):"];
+            foreach ($results as $i => $result) {
+                $artist = $result['artist'] ?? '';
+                $album = $result['album'] ?? '';
+                $line = ($i + 1).". {$result['name']}";
+                if ($artist) {
+                    $line .= " by {$artist}";
+                }
+                if ($album) {
+                    $line .= " ({$album})";
+                }
+                $lines[] = $line;
+            }
+
+            return Response::text(implode("\n", $lines));
+        });
     }
 }

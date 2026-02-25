@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools;
 
+use App\Mcp\Concerns\HandlesAuthErrors;
 use App\Services\SpotifyService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -14,6 +15,8 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Set repeat mode: off (no repeat), track (repeat current song), or context (repeat album/playlist)')]
 class RepeatTool extends Tool
 {
+    use HandlesAuthErrors;
+
     public function schema(JsonSchema $schema): array
     {
         return [
@@ -26,9 +29,11 @@ class RepeatTool extends Tool
 
     public function handle(Request $request, SpotifyService $spotify): Response
     {
-        $mode = $request->get('mode');
-        $spotify->setRepeat($mode);
+        return $this->withAuthHandling(function () use ($request, $spotify) {
+            $mode = $request->get('mode');
+            $spotify->setRepeat($mode);
 
-        return Response::text("Repeat mode set to {$mode}.");
+            return Response::text("Repeat mode set to {$mode}.");
+        });
     }
 }

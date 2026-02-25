@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools;
 
+use App\Mcp\Concerns\HandlesAuthErrors;
 use App\Services\SpotifyService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -14,6 +15,8 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Toggle or set shuffle mode. Omit enabled to toggle.')]
 class ShuffleTool extends Tool
 {
+    use HandlesAuthErrors;
+
     public function schema(JsonSchema $schema): array
     {
         return [
@@ -24,17 +27,19 @@ class ShuffleTool extends Tool
 
     public function handle(Request $request, SpotifyService $spotify): Response
     {
-        $enabled = $request->get('enabled');
+        return $this->withAuthHandling(function () use ($request, $spotify) {
+            $enabled = $request->get('enabled');
 
-        if ($enabled === null) {
-            $playback = $spotify->getCurrentPlayback();
-            $current = $playback['shuffle_state'] ?? false;
-            $enabled = ! $current;
-        }
+            if ($enabled === null) {
+                $playback = $spotify->getCurrentPlayback();
+                $current = $playback['shuffle_state'] ?? false;
+                $enabled = ! $current;
+            }
 
-        $spotify->setShuffle((bool) $enabled);
-        $state = $enabled ? 'on' : 'off';
+            $spotify->setShuffle((bool) $enabled);
+            $state = $enabled ? 'on' : 'off';
 
-        return Response::text("Shuffle turned {$state}.");
+            return Response::text("Shuffle turned {$state}.");
+        });
     }
 }

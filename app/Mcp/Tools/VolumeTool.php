@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools;
 
+use App\Mcp\Concerns\HandlesAuthErrors;
 use App\Services\SpotifyService;
 use Illuminate\Contracts\JsonSchema\JsonSchema;
 use Laravel\Mcp\Request;
@@ -14,6 +15,8 @@ use Laravel\Mcp\Server\Tool;
 #[Description('Get or set Spotify volume. Omit level to get current volume.')]
 class VolumeTool extends Tool
 {
+    use HandlesAuthErrors;
+
     public function schema(JsonSchema $schema): array
     {
         return [
@@ -24,22 +27,24 @@ class VolumeTool extends Tool
 
     public function handle(Request $request, SpotifyService $spotify): Response
     {
-        $level = $request->get('level');
+        return $this->withAuthHandling(function () use ($request, $spotify) {
+            $level = $request->get('level');
 
-        if ($level === null) {
-            $playback = $spotify->getCurrentPlayback();
-            $volume = $playback['device']['volume_percent'] ?? null;
+            if ($level === null) {
+                $playback = $spotify->getCurrentPlayback();
+                $volume = $playback['device']['volume_percent'] ?? null;
 
-            if ($volume === null) {
-                return Response::text('Could not determine current volume.');
+                if ($volume === null) {
+                    return Response::text('Could not determine current volume.');
+                }
+
+                return Response::text("Current volume: {$volume}%");
             }
 
-            return Response::text("Current volume: {$volume}%");
-        }
+            $level = max(0, min(100, (int) $level));
+            $spotify->setVolume($level);
 
-        $level = max(0, min(100, (int) $level));
-        $spotify->setVolume($level);
-
-        return Response::text("Volume set to {$level}%.");
+            return Response::text("Volume set to {$level}%.");
+        });
     }
 }

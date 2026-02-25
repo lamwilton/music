@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools;
 
+use App\Mcp\Concerns\HandlesAuthErrors;
 use App\Services\SpotifyService;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -17,28 +18,32 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[IsIdempotent]
 class CurrentTool extends Tool
 {
+    use HandlesAuthErrors;
+
     public function handle(Request $request, SpotifyService $spotify): Response
     {
-        $playback = $spotify->getCurrentPlayback();
+        return $this->withAuthHandling(function () use ($spotify) {
+            $playback = $spotify->getCurrentPlayback();
 
-        if (! $playback) {
-            return Response::text('Nothing is currently playing.');
-        }
+            if (! $playback) {
+                return Response::text('Nothing is currently playing.');
+            }
 
-        $progress = $this->formatTime($playback['progress_ms']);
-        $duration = $this->formatTime($playback['duration_ms']);
-        $state = $playback['is_playing'] ? 'Playing' : 'Paused';
-        $device = $playback['device']['name'] ?? 'Unknown device';
-        $shuffle = $playback['shuffle_state'] ? 'On' : 'Off';
-        $repeat = $playback['repeat_state'];
+            $progress = $this->formatTime($playback['progress_ms']);
+            $duration = $this->formatTime($playback['duration_ms']);
+            $state = $playback['is_playing'] ? 'Playing' : 'Paused';
+            $device = $playback['device']['name'] ?? 'Unknown device';
+            $shuffle = $playback['shuffle_state'] ? 'On' : 'Off';
+            $repeat = $playback['repeat_state'];
 
-        return Response::text(implode("\n", [
-            "{$playback['name']} by {$playback['artist']}",
-            "Album: {$playback['album']}",
-            "Progress: {$progress} / {$duration}",
-            "State: {$state} | Shuffle: {$shuffle} | Repeat: {$repeat}",
-            "Device: {$device}",
-        ]));
+            return Response::text(implode("\n", [
+                "{$playback['name']} by {$playback['artist']}",
+                "Album: {$playback['album']}",
+                "Progress: {$progress} / {$duration}",
+                "State: {$state} | Shuffle: {$shuffle} | Repeat: {$repeat}",
+                "Device: {$device}",
+            ]));
+        });
     }
 
     private function formatTime(int $ms): string

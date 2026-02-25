@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools;
 
+use App\Mcp\Concerns\HandlesAuthErrors;
 use App\Services\SpotifyService;
 use Laravel\Mcp\Request;
 use Laravel\Mcp\Response;
@@ -17,29 +18,33 @@ use Laravel\Mcp\Server\Tools\Annotations\IsReadOnly;
 #[IsIdempotent]
 class QueueShowTool extends Tool
 {
+    use HandlesAuthErrors;
+
     public function handle(Request $request, SpotifyService $spotify): Response
     {
-        $queue = $spotify->getQueue();
+        return $this->withAuthHandling(function () use ($spotify) {
+            $queue = $spotify->getQueue();
 
-        if (empty($queue) || empty($queue['queue'])) {
-            return Response::text('Queue is empty.');
-        }
+            if (empty($queue) || empty($queue['queue'])) {
+                return Response::text('Queue is empty.');
+            }
 
-        $lines = [];
+            $lines = [];
 
-        if (! empty($queue['currently_playing'])) {
-            $track = $queue['currently_playing'];
-            $artist = $track['artists'][0]['name'] ?? 'Unknown';
-            $lines[] = "Now playing: {$track['name']} by {$artist}";
-            $lines[] = '';
-        }
+            if (! empty($queue['currently_playing'])) {
+                $track = $queue['currently_playing'];
+                $artist = $track['artists'][0]['name'] ?? 'Unknown';
+                $lines[] = "Now playing: {$track['name']} by {$artist}";
+                $lines[] = '';
+            }
 
-        $lines[] = 'Up next:';
-        foreach (array_slice($queue['queue'], 0, 20) as $i => $track) {
-            $artist = $track['artists'][0]['name'] ?? 'Unknown';
-            $lines[] = ($i + 1).". {$track['name']} by {$artist}";
-        }
+            $lines[] = 'Up next:';
+            foreach (array_slice($queue['queue'], 0, 20) as $i => $track) {
+                $artist = $track['artists'][0]['name'] ?? 'Unknown';
+                $lines[] = ($i + 1).". {$track['name']} by {$artist}";
+            }
 
-        return Response::text(implode("\n", $lines));
+            return Response::text(implode("\n", $lines));
+        });
     }
 }

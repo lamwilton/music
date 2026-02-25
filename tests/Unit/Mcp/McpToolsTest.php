@@ -19,6 +19,49 @@ use Tests\TestCase;
 uses(TestCase::class);
 
 // ---------------------------------------------------------------------------
+// Auth Error Handling (HandlesAuthErrors trait)
+// ---------------------------------------------------------------------------
+
+describe('HandlesAuthErrors', function () {
+
+    it('returns clean error response when auth expires during pause', function () {
+        $this->mock(SpotifyService::class, function ($mock) {
+            $mock->shouldReceive('pause')->once()->andThrow(
+                new \Exception('Not authenticated. Run "spotify login" first.')
+            );
+        });
+
+        SpotifyServer::tool(PauseTool::class)
+            ->assertHasErrors()
+            ->assertSee('Spotify auth expired. Run `spotify login` to re-authenticate.');
+    });
+
+    it('returns clean error response when session expires during play', function () {
+        $this->mock(SpotifyService::class, function ($mock) {
+            $mock->shouldReceive('search')->once()->andThrow(
+                new \Exception('Session expired. Run "spotify login" to re-authenticate.')
+            );
+        });
+
+        SpotifyServer::tool(PlayTool::class, ['query' => 'test'])
+            ->assertHasErrors()
+            ->assertSee('Spotify auth expired. Run `spotify login` to re-authenticate.');
+    });
+
+    it('re-throws non-auth exceptions', function () {
+        $this->mock(SpotifyService::class, function ($mock) {
+            $mock->shouldReceive('pause')->once()->andThrow(
+                new \Exception('No Spotify devices available. Open Spotify on any device.')
+            );
+        });
+
+        expect(fn () => SpotifyServer::tool(PauseTool::class))
+            ->toThrow(\Exception::class, 'No Spotify devices available');
+    });
+
+});
+
+// ---------------------------------------------------------------------------
 // PauseTool
 // ---------------------------------------------------------------------------
 
